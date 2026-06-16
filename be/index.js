@@ -1,71 +1,87 @@
 require("dotenv").config();
+const authRouter = require("./routes/auth");
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const { neon } = require("@neondatabase/serverless");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware cho phép Express đọc và xử lý dữ liệu JSON gửi lên từ client
 app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"], // Các phương thức được cho phép
-    credentials: true, // Cho phép gửi cookie / token nếu sau này bạn làm tính năng đăng nhập
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   }),
 );
-// Khởi tạo kết nối trực tiếp tới Neon qua HTTP Client
-// (Rất nhẹ, tối ưu và không lo bị dính lỗi quá tải số lượng kết nối - Connection Limit)
+
+app.use(cookieParser());
+app.use("/api/auth", authRouter);
+
 const sql = neon(process.env.DATABASE_URL);
 
 // API lấy sản phẩm có phân trang (Lazy Loading) theo loại
 app.get("/api/products", async (req, res) => {
   try {
-    // 1. Lấy các tham số từ URL gửi lên (có gán giá trị mặc định)
-    const type = req.query.type; // Ví dụ: 'KeyboardKit', 'Keycap', 'Switch'
-    const page = parseInt(req.query.page) || 1; // Trang hiện tại, mặc định là trang 1
-    const limit = parseInt(req.query.limit) || 8; // Số sản phẩm mỗi trang, mặc định là 8
-
+    const type = req.query.type;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 8;
+    const sort = req.query.sort || "default";
     const offset = (page - 1) * limit;
 
-    // 3. Thực hiện câu lệnh SQL truy vấn động
+    // Lúc này bạn có thể tự do ORDER BY theo bất cứ trường nào bạn muốn!
+    let orderBySql = sql`"ProductID" ASC`;
+    if (sort === "price-asc") {
+      orderBySql = sql`"Price" ASC`;
+    } else if (sort === "price-desc") {
+      orderBySql = sql`"Price" DESC`;
+    } else if (sort === "name-asc") {
+      orderBySql = sql`"Name" ASC`;
+    } else if (sort === "name-desc") {
+      orderBySql = sql`"Name" DESC`;
+    }
+
     let products;
     if (type) {
-      // Nếu có truyền loại mặt hàng (ProductType)
       products = await sql`
-        SELECT DISTINCT ON (p."ProductID") 
-            p."ProductID", 
-            p."Name", 
-            p."Description", 
-            p."ProductType", 
-            p."SubType",
-            pv."MainImage" AS "MainImage",
-            pv."Price" AS "Price"
-        FROM "product" p
-        LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
-        WHERE p."ProductType" = ${type} 
-        ORDER BY p."ProductID" ASC
+        SELECT * FROM (
+          SELECT DISTINCT ON (p."ProductID") 
+              p."ProductID", 
+              p."Name", 
+              p."Description", 
+              p."ProductType", 
+              p."SubType",
+              pv."MainImage" AS "MainImage",
+              pv."Price" AS "Price"
+          FROM "product" p
+          LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
+          WHERE p."ProductType" = ${type} 
+          ORDER BY p."ProductID" ASC, pv."Color" ASC
+        ) as standard_products
+        ORDER BY ${orderBySql}
         LIMIT ${limit} OFFSET ${offset}
       `;
     } else {
-      // Nếu không truyền type thì lấy chung tất cả
       products = await sql`
-        SELECT DISTINCT ON (p."ProductID") 
-            p."ProductID", 
-            p."Name", 
-            p."Description", 
-            p."ProductType", 
-            p."SubType",
-            pv."MainImage" AS "thumbnail_img"
-        FROM "product" p
-        LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
-        ORDER BY p."ProductID" ASC, pv."Color" ASC 
+        SELECT * FROM (
+          SELECT DISTINCT ON (p."ProductID") 
+              p."ProductID", 
+              p."Name", 
+              p."Description", 
+              p."ProductType", 
+              p."SubType",
+              pv."MainImage" AS "MainImage",
+              pv."Price" AS "Price"
+          FROM "product" p
+          LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
+          ORDER BY p."ProductID" ASC, pv."Color" ASC
+        ) as all_products
+        ORDER BY ${orderBySql}
         LIMIT ${limit} OFFSET ${offset}
       `;
     }
-
-    // 4. Trả kết quả về cho Frontend
     res.status(200).json({
       success: true,
       currentPage: page,

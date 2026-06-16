@@ -36,15 +36,15 @@ export function handleFailedFn<TEntity, TResValue>({
   return state;
 }
 
-export function handleByResponseFn<TEntity, TResValue>(
-  res: GatewayResponseModel<TResValue>,
-  convertFunc?: ConvertResponseModelToEntityFieldsFunc<TResValue, TEntity>,
-): HandleStateType<TEntity, TResValue> {
-  if (res.code == HttpStatusCode.Ok || res.code == HttpStatusCode.Created) {
-    const { data, message } = res;
-    return handleSuccessFn({ resValue: data, message }, convertFunc);
-  } else {
-    const { data, message } = res;
-    return handleFailedFn({ resValue: data, message });
-  }
-}
+// export function handleByResponseFn<TEntity, TResValue>(
+//   res: GatewayResponseModel<TResValue>,
+//   convertFunc?: ConvertResponseModelToEntityFieldsFunc<TResValue, TEntity>,
+// ): HandleStateType<TEntity, TResValue> {
+//   if (res.code == HttpStatusCode.Ok || res.code == HttpStatusCode.Created) {
+//     const { data, message } = res;
+//     return handleSuccessFn({ resValue: data, message }, convertFunc);
+//   } else {
+//     const { data, message } = res;
+//     return handleFailedFn({ resValue: data, message });
+//   }
+// }

@@ -15,12 +15,15 @@ import { LoaderCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { useInView } from "react-intersection-observer";
 import { ProductSkeleton } from "./product_skeletion";
+import Sorting from "./sorting";
 export default function ProductGrid({ type }: { type: string }) {
+  const [sort, setSort] = useState("default");
   const formatter = new Intl.NumberFormat("vi-VN");
   const { ref, inView } = useInView({
     triggerOnce: true, // Chỉ kích hoạt 1 lần duy nhất khi nhìn thấy
     rootMargin: "300px 0px", // Khách cuộn gần tới nơi cách 200px là đã âm thầm load trước
   });
+
   const {
     data,
     fetchNextPage, // Hàm kích hoạt gọi trang tiếp theo (gọi khi bấm nút Load More)
@@ -29,10 +32,10 @@ export default function ProductGrid({ type }: { type: string }) {
     isLoading,
     isError,
   } = useInfiniteQuery({
-    queryKey: ["infinite-products", type],
+    queryKey: ["infinite-products", type, sort],
 
     queryFn: ({ pageParam = 1 }) =>
-      ProductUsecase.getProducts({ type, page: pageParam }),
+      ProductUsecase.getProducts({ type, page: pageParam, sort }),
 
     initialPageParam: 1,
 
@@ -43,9 +46,12 @@ export default function ProductGrid({ type }: { type: string }) {
     },
     enabled: inView,
   });
-  const handleLoadMore = () => {};
+  const handleSortChange = (sortOpt: string) => {
+    setSort(sortOpt);
+  };
   return (
     <div ref={ref}>
+      <Sorting onSortChange={handleSortChange} />
       {!inView || isLoading ? (
         <div>
           <ProductSkeleton />
@@ -79,6 +85,20 @@ export default function ProductGrid({ type }: { type: string }) {
                 ))}
               </React.Fragment>
             ))}
+            {isFetchingNextPage && (
+              <React.Fragment>
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <div key={`load-more-skeleton-${idx}`} className="opacity-70">
+                    {/* Bạn có thể tạo riêng 1 file single-card-skeleton hoặc lấy cấu trúc thô của Card bọc Skeleton */}
+                    <div className="animate-pulse space-y-4">
+                      <div className="aspect-video w-full bg-gray-200 rounded-md dark:bg-gray-700" />
+                      <div className="h-4 bg-gray-200 rounded w-2/3 dark:bg-gray-700" />
+                      <div className="h-4 bg-gray-200 rounded w-full dark:bg-gray-700" />
+                    </div>
+                  </div>
+                ))}
+              </React.Fragment>
+            )}
           </div>
           <div
             className={clsx({
@@ -88,7 +108,7 @@ export default function ProductGrid({ type }: { type: string }) {
             <div className="flex flex-row justify-center items-center w-full mt-10 mb-10">
               <Button
                 className="cursor-pointer bg-gray-400 text-lg p-4"
-                // onClick={handleLoadMore()}
+                onClick={() => fetchNextPage()}
               >
                 Load more
               </Button>

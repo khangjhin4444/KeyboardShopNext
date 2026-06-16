@@ -4,9 +4,11 @@ const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 type GetProducts = ({
   type,
   page,
+  sort,
 }: {
   type: string;
   page: number;
+  sort: string;
 }) => Promise<Product[]>;
 
 type ProductServiceType = {
@@ -14,10 +16,18 @@ type ProductServiceType = {
 };
 
 export const ProductService: ProductServiceType = {
-  getProducts: async function ({ type, page }: { type: string; page: number }) {
+  getProducts: async function ({
+    type,
+    page,
+    sort,
+  }: {
+    type: string;
+    page: number;
+    sort: string;
+  }) {
     try {
       const response = await fetch(
-        `${API_URL}/api/products?type=${type}&page=${page}&limit=8`,
+        `${API_URL}/api/products?type=${type}&page=${page}&limit=8&sort=${sort}`,
       );
 
       if (!response.ok) {

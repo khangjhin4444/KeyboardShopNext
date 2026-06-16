@@ -4,8 +4,19 @@ import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "@/store/userStore";
+import { useState, useEffect } from "react";
+
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isAuth, logout } = useUserStore();
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  if (!hasMounted) return null;
   return (
     <header className="w-full bg-[#8CC0EB] dark:bg-black flex flex-col justify-center pb-5 items-center">
       <h1 className="text-4xl mt-6 font-bold text-[#FFEBCC] dark:text-zinc-50">
@@ -32,8 +43,11 @@ export default function Header() {
           </div>
         </div>
         <div className="flex flex-row items-center gap-7">
-          <button>
+          <button onClick={() => router.push("/cart")} className="relative">
             <ShoppingCart className="w-8 h-8 text-[#FFEBCC]" />
+            <div className="absolute -right-2 -top-2 bg-gray-300 rounded-full p-2 w-6 h-6  items-center flex justify-center font-bold">
+              {user?.cartQuantity}
+            </div>
           </button>
           <button className=" cursor-pointer">
             <CircleUser className="w-8 h-8 text-[#FFEBCC]" />

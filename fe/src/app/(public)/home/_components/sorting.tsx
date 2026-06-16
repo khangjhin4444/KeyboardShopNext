@@ -8,7 +8,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-export default function Sorting() {
+export default function Sorting({
+  onSortChange,
+}: {
+  onSortChange: (val: string) => void;
+}) {
   const [nameSort, setNameSort] = useState("default");
   const [priceSort, setPriceSort] = useState("default");
   return (
@@ -19,6 +23,7 @@ export default function Sorting() {
         <Select
           value={nameSort}
           onValueChange={(value) => {
+            onSortChange(`name-${value}`);
             setNameSort(value);
             setPriceSort("default");
           }}
@@ -46,6 +51,7 @@ export default function Sorting() {
         <Select
           value={priceSort}
           onValueChange={(value) => {
+            onSortChange(`price-${value}`);
             setPriceSort(value);
             setNameSort("default");
           }}
