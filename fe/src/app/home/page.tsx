@@ -12,7 +12,10 @@ export default function Home() {
         <Category />
       </div>
 
+      <ProductList type={"KeyboardKit"} />
       <ProductList type={"Prebuild"} />
+      <ProductList type={"Keycap"} />
+      <ProductList type={"Switch"} />
     </div>
   );
 }
