@@ -1,4 +1,10 @@
-import Product from "../entities/product-entity";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import {
+  ProductEntity,
+  ProductDetailEntity,
+  convertToProductEntity,
+  convertToProductDetailEntity,
+} from "../entities/product.entity";
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 type GetProducts = ({
@@ -9,10 +15,26 @@ type GetProducts = ({
   type: string;
   page: number;
   sort: string;
-}) => Promise<Product[]>;
+}) => Promise<ProductEntity[]>;
+
+type GetProductDetail = ({
+  id,
+}: {
+  id: number;
+}) => Promise<ProductDetailEntity>;
+
+type GetRelevantProducts = ({
+  id,
+  type,
+}: {
+  id: number;
+  type: string;
+}) => Promise<ProductEntity[]>;
 
 type ProductServiceType = {
   getProducts: GetProducts;
+  getProductDetail: GetProductDetail;
+  getRelevantProducts: GetRelevantProducts;
 };
 
 export const ProductService: ProductServiceType = {
@@ -35,13 +57,45 @@ export const ProductService: ProductServiceType = {
       }
 
       const result = await response.json();
-
+      const data = result.data.map((item: ProductEntity) =>
+        convertToProductEntity(item),
+      );
       // Sau khi lấy dữ liệu thành công, return về đúng kiểu dữ liệu đã hứa (Product[])
-      return result.data as Product[];
+      return data;
     } catch (error) {
       console.error("Lỗi khi call API:", error);
       // Nếu có lỗi, Promise chuyển sang trạng thái Thất bại (Rejected)
       throw error;
+    }
+  },
+  getProductDetail: async function ({ id }: { id: number }) {
+    try {
+      const result = await fetchWithAuth(`${API_URL}/api/products/${id}`);
+      const data = convertToProductDetailEntity(result.data);
+      return data;
+    } catch (err) {
+      console.log("Loi khi call api: ", err);
+      throw err;
+    }
+  },
+  getRelevantProducts: async function ({
+    id,
+    type,
+  }: {
+    id: number;
+    type: string;
+  }) {
+    try {
+      const result = await fetchWithAuth(
+        `${API_URL}/api/products/relevant?id=${id}&type=${type}`,
+      );
+      const data = result.data.map((item: ProductEntity) =>
+        convertToProductEntity(item),
+      );
+      return data;
+    } catch (err) {
+      console.log(err);
+      throw err;
     }
   },
 };

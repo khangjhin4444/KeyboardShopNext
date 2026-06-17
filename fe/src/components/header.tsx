@@ -7,11 +7,13 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/userStore";
 import { useState, useEffect } from "react";
+import { hidden } from "next/dist/lib/picocolors";
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuth, logout } = useUserStore();
+
   const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {
     setHasMounted(true);
@@ -45,11 +47,22 @@ export default function Header() {
         <div className="flex flex-row items-center gap-7">
           <button onClick={() => router.push("/cart")} className="relative">
             <ShoppingCart className="w-8 h-8 text-[#FFEBCC]" />
-            <div className="absolute -right-2 -top-2 bg-gray-300 rounded-full p-2 w-6 h-6  items-center flex justify-center font-bold">
+            <div
+              className={clsx(
+                "absolute -right-2 -top-2 bg-gray-300 rounded-full p-2 w-6 h-6  items-center flex justify-center font-bold",
+                { hidden: !user },
+              )}
+            >
               {user?.cartQuantity}
             </div>
           </button>
-          <button className=" cursor-pointer">
+          <button
+            className=" cursor-pointer"
+            onClick={() => {
+              logout();
+              router.push("/login");
+            }}
+          >
             <CircleUser className="w-8 h-8 text-[#FFEBCC]" />
           </button>
         </div>

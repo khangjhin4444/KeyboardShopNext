@@ -7,3 +7,21 @@ export interface ProductResponseModel {
   MainImage: string;
   Price: number;
 }
+
+export interface Variant {
+  VariantID: number;
+  Color: string;
+  Price: number;
+  Stock: number;
+  MainImage: string;
+}
+
+export interface ProductDetailResponseModel {
+  ProductID: number;
+  Name: string;
+  ProductType: string;
+  Description: string;
+  SubType: string;
+  images: string[];
+  variants: Variant[];
+}

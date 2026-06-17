@@ -1,6 +1,7 @@
 import React, { useState, useEffect, use } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardAction,
@@ -16,6 +17,7 @@ import { clsx } from "clsx";
 import { useInView } from "react-intersection-observer";
 import { ProductSkeleton } from "./product_skeletion";
 import Sorting from "./sorting";
+import { router } from "next/client";
 export default function ProductGrid({ type }: { type: string }) {
   const [sort, setSort] = useState("default");
   const formatter = new Intl.NumberFormat("vi-VN");
@@ -23,6 +25,7 @@ export default function ProductGrid({ type }: { type: string }) {
     triggerOnce: true, // Chỉ kích hoạt 1 lần duy nhất khi nhìn thấy
     rootMargin: "300px 0px", // Khách cuộn gần tới nơi cách 200px là đã âm thầm load trước
   });
+  const router = useRouter();
 
   const {
     data,
@@ -66,7 +69,12 @@ export default function ProductGrid({ type }: { type: string }) {
                     key={product.ProductID}
                     className="relative mx-auto w-full  max-w-sm pt-0"
                   >
-                    <div className="absolute inset-0 z-30 aspect-square" />
+                    <div
+                      className="absolute inset-0 z-30 aspect-square cursor-pointer"
+                      onClick={() => {
+                        router.push(`/product/${product.ProductID}`);
+                      }}
+                    />
                     <img
                       src={product.MainImage}
                       alt="Product Image"
@@ -77,7 +85,12 @@ export default function ProductGrid({ type }: { type: string }) {
                       <CardDescription className="text-center font-semibold text-[#7c5c2c]">
                         Price: {formatter.format(product.Price)} VND
                       </CardDescription>
-                      <Button className="w-full bg-[#8CC0EB] hover:bg-[#BFDDF0] mt-5">
+                      <Button
+                        className="cursor-pointer w-full bg-[#8CC0EB] hover:bg-[#BFDDF0] mt-5"
+                        onClick={() =>
+                          router.push(`/product/${product.ProductID}`)
+                        }
+                      >
                         View More
                       </Button>
                     </CardHeader>

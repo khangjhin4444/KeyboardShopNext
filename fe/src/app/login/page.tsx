@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
+import { Metadata } from "next";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -29,11 +30,11 @@ export default function AuthPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include",
       });
       const data = await res.json();
       console.log(data);
       if (data.success) {
-        // Lưu Access Token vào localStorage để dễ dàng lấy ra đính kèm vào API
         localStorage.setItem("accessToken", data.accessToken);
         loginAction(data.user);
         console.log("Login", data.user);

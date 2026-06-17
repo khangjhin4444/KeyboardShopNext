@@ -12,4 +12,10 @@ export const ProductUsecase = {
   }) => {
     return ProductService.getProducts({ type, page, sort });
   },
+  getProductDetail: (id: number) => {
+    return ProductService.getProductDetail({ id });
+  },
+  getRelevantProducts: (id: number, type: string) => {
+    return ProductService.getRelevantProducts({ id, type });
+  },
 };

@@ -127,4 +127,17 @@ router.post("/refresh", (req, res) => {
   });
 });
 
+router.post("/logout", (req, res) => {
+  // Dùng hàm clearCookie để ra lệnh cho trình duyệt xóa Cookie tên là 'refreshToken'
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+  });
+
+  res
+    .status(200)
+    .json({ success: true, message: "Đăng xuất thành công, đã xóa Cookie" });
+});
+
 module.exports = router;

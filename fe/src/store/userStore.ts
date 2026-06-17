@@ -9,7 +9,8 @@ interface UserState {
   } | null;
   isAuth: boolean;
   login: (userData: any) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  updateCartQuantity: (quantity: number) => void;
 }
 
 // Khởi tạo kho lưu trữ
@@ -23,10 +24,30 @@ export const useUserStore = create<UserState>()(
       login: (userData) => set({ user: userData, isAuth: true }),
 
       // Hàm gọi khi bấm đăng xuất
-      logout: () => {
-        localStorage.removeItem("accessToken");
-        set({ user: null, isAuth: false });
+      logout: async () => {
+        try {
+          await fetch("http://localhost:8000/api/auth/logout", {
+            method: "POST",
+            // QUAN TRỌNG: Phải có dòng này thì trình duyệt mới gửi Cookie lên cho Backend xóa
+            credentials: "include",
+          });
+        } catch (err) {
+          console.error("Lỗi khi gọi API đăng xuất:", err);
+        } finally {
+          localStorage.removeItem("accessToken");
+          set({ user: null, isAuth: false });
+          window.location.href = "/login";
+        }
       },
+      updateCartQuantity: (newQuantity: number) =>
+        set((state) => ({
+          user: state.user
+            ? {
+                ...state.user,
+                cartQuantity: newQuantity,
+              }
+            : null,
+        })),
     }),
     {
       name: "user-storage", // Tên của key sẽ được lưu trong localStorage của trình duyệt

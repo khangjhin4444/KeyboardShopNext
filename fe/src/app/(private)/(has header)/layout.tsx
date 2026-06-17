@@ -1,0 +1,13 @@
+import Header from "@/components/header";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
+export default function Layout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <TooltipProvider>
+      <Header />
+      {children}
+    </TooltipProvider>
+  );
+}

@@ -13,21 +13,8 @@ export default function CartPage() {
   // Dùng TanStack Query thay cho toàn bộ logic useEffect cũ
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["cart-items"],
-    queryFn: () => fetchWithAuth("http://localhost:8000/api/private/cart"),
-    retry: (failureCount, err) => {
-      // Không retry lại (gọi lại mù quáng) nếu lỗi là do hết hạn phiên đăng nhập
-      if (err.message === "SESSION_EXPIRED") return false;
-      return failureCount < 2; // Các lỗi khác mạng lag thì cho retry 2 lần
-    },
+    queryFn: () => fetchWithAuth("http://localhost:8000/api/cart"),
   });
-
-  // Xử lý đá văng về trang Login nếu bắt được lỗi hết hạn phiên
-  useEffect(() => {
-    if (isError && error?.message === "SESSION_EXPIRED") {
-      localStorage.removeItem("accessToken");
-      router.push("/login");
-    }
-  }, [isError, error, router]);
 
   // UI khi đang tải
   if (isLoading) {
