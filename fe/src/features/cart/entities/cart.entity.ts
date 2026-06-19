@@ -1,4 +1,9 @@
-import { AddToCartResponseModel } from "../models/cart.model";
+import {
+  AddToCartResponseModel,
+  CartItemsResponseModel,
+  ChangeItemQuantityResponseModel,
+  DeleteCartItemResponseModel,
+} from "../models/cart.model";
 
 export interface AddToCartResponseEntity {
   success: boolean;
@@ -6,9 +11,64 @@ export interface AddToCartResponseEntity {
   newQuantity?: number;
 }
 
-export function converToAddToCartResponseEntity(
+export interface CartItemEntity {
+  CartItemID: number;
+  Quantity: number;
+  MainImage: string;
+  Price: number;
+  Name: string;
+  Color: string;
+  Stock: number;
+  VariantID: number;
+}
+
+export interface ChangeItemQuantityResponseEntity {
+  success: boolean;
+  message: string;
+  newQuantity?: number;
+}
+
+export interface DeleteCartItemResponseEntity {
+  success: boolean;
+  message: string;
+  newQuantity?: number;
+}
+
+export interface CartItemResponseEntity {
+  items: CartItemEntity[];
+}
+
+export function convertToCartItemEntity(
+  responseModel: CartItemsResponseModel,
+): CartItemResponseEntity {
+  return {
+    items: responseModel.items,
+  };
+}
+
+export function convertToAddToCartResponseEntity(
   responseModel: AddToCartResponseModel,
 ): AddToCartResponseEntity {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
+    newQuantity: responseModel.newQuantity,
+  };
+}
+
+export function convertToChangeItemQuantityResponseEntity(
+  responseModel: ChangeItemQuantityResponseModel,
+): AddToCartResponseEntity {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
+    newQuantity: responseModel.newQuantity,
+  };
+}
+
+export function convertToDeleteCartItemResponseEntity(
+  responseModel: DeleteCartItemResponseModel,
+): DeleteCartItemResponseEntity {
   return {
     success: responseModel.success,
     message: responseModel.message,

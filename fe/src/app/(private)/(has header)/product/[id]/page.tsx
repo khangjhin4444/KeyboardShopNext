@@ -9,12 +9,11 @@ import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useUserStore } from "@/store/userStore";
+import Quantity from "@/components/quantity";
 
 export default function Page() {
   const updateCartQuantity = useUserStore((state) => state.updateCartQuantity);
-  const currentQuantity = useUserStore(
-    (state) => state.user?.cartQuantity || 0,
-  );
+  let currentQuantity = useUserStore((state) => state.user?.cartQuantity || 0);
   const params = useParams();
   const productID = parseInt(params.id as string, 10);
   const { data, isLoading, isError, isSuccess } = useQuery({
@@ -35,6 +34,9 @@ export default function Page() {
   const addToCartMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
       return CartUsecase.addToCart(payload); // Trả kết quả về cho onSuccess xử lý
+    },
+    onSuccess: () => {
+      updateCartQuantity(Number(currentQuantity) + Number(quantity));
     },
   });
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -97,39 +99,6 @@ export default function Page() {
     return new Intl.NumberFormat("vi-VN").format(amount) + "VND";
   };
 
-  const handleQuantityChange = (
-    type: "decrease" | "increase" | "input",
-    value?: string | number, // Nhận thêm kiểu string
-  ) => {
-    const currentStock = activeVariant?.Stock || 0;
-
-    if (type === "decrease") {
-      setQuantity((prev) => Math.max(1, (Number(prev) || 1) - 1));
-    }
-
-    if (type === "increase") {
-      setQuantity((prev) => {
-        const current = Number(prev) || 1;
-        return current < currentStock ? current + 1 : currentStock;
-      });
-    }
-
-    if (type === "input" && value !== undefined) {
-      if (value === "") {
-        setQuantity("");
-        return;
-      }
-
-      const numValue = parseInt(value.toString(), 10);
-      if (isNaN(numValue)) return;
-      if (numValue <= currentStock) {
-        setQuantity(numValue);
-      } else {
-        setQuantity(currentStock);
-      }
-    }
-  };
-
   const handleAddToCart = () => {
     if (!activeVariant) {
       toast("Choose a variant");
@@ -152,7 +121,6 @@ export default function Page() {
           throw new Error(res.message || "Lỗi khi thêm vào giỏ hàng");
         }
 
-        updateCartQuantity(Number(currentQuantity) + Number(qty));
         return res;
       });
 
@@ -261,36 +229,12 @@ export default function Page() {
           )}
 
           {/* Chọn số lượng */}
-          <div className="flex items-center mb-10">
-            <div className="text-2xl mr-10">Quantity:</div>
-            <div className="flex items-center  overflow-hidden">
-              <button
-                onClick={() => handleQuantityChange("decrease")}
-                className="px-4 py-2 text-5xl cursor-pointer"
-              >
-                <Minus />
-              </button>
-              <input
-                type="number"
-                max={activeVariant?.Stock}
-                value={quantity}
-                onChange={(e) => handleQuantityChange("input", e.target.value)}
-                onBlur={() => {
-                  if (quantity === "" || Number(quantity) < 1) {
-                    setQuantity(1);
-                  }
-                }}
-                className="w-20 text-center text-2xl outline-none  py-2"
-                // min="1"
-              />
-              <button
-                onClick={() => handleQuantityChange("increase")}
-                className="px-4 py-2 text-5xl cursor-pointer"
-              >
-                <Plus />
-              </button>
-            </div>
-          </div>
+          <Quantity
+            quantity={quantity}
+            currentStock={activeVariant?.Stock!}
+            setQuantity={setQuantity}
+            isCart={false}
+          />
 
           {/* Nút hành động */}
           <div className="flex flex-col xl:flex-row gap-4">

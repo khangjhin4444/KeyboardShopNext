@@ -7,7 +7,7 @@ const getCart = async (req, res) => {
 
     // Lấy danh sách sản phẩm trong giỏ kèm thông tin biến thể ảnh và giá
     const cartItems = await sql`
-      SELECT ci."CartItemID", ci."Quantity", pv."MainImage", pv."Price", p."Name"
+      SELECT ci."CartItemID", ci."Quantity", pv."MainImage", pv."Price", p."Name", pv."Color", pv."Stock", pv."VariantID"
       FROM "cart" c
       JOIN "cart_items" ci ON c."CartID" = ci."CartID"
       JOIN "product_variants" pv ON ci."VariantID" = pv."VariantID"
@@ -15,7 +15,7 @@ const getCart = async (req, res) => {
       WHERE c."UserID" = ${currentUserId}
     `;
 
-    res.status(200).json({ success: true, items: cartItems });
+    res.status(200).json({ items: cartItems });
   } catch (error) {
     res.status(500).json({ message: "Lỗi server" });
   }
@@ -104,14 +104,15 @@ const addToCart = async (req, res) => {
         VALUES (${cartId}, ${VariantID}, ${Quantity})
       `;
     }
-    const newQuantity = sql`SELECT COALESCE(SUM("Quantity"), 0) AS "TotalQuantity"
+    const newQuantity =
+      await sql`SELECT COALESCE(SUM("Quantity"), 0) AS "TotalQuantity"
                             FROM "cart_items"
                             WHERE "CartID" = ${cartId};`;
     // 6. Hoàn tất
     return res.status(200).json({
       success: true,
       message: "Added to Cart!",
-      newQuantity: newQuantity,
+      newQuantity: newQuantity[0].TotalQuantity,
     });
   } catch (error) {
     console.error("Lỗi khi thêm vào giỏ hàng:", error);
@@ -120,4 +121,107 @@ const addToCart = async (req, res) => {
       .json({ success: false, message: "Lỗi máy chủ nội bộ." });
   }
 };
-module.exports = { getCart, addToCart };
+const changeItemQuantity = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { VariantID, Quantity } = req.body;
+    if (!VariantID || !Quantity || Quantity <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại ID và số lượng.",
+      });
+    }
+
+    const variantRecord = await sql`
+      SELECT "Stock" FROM "product_variants" WHERE "VariantID" = ${VariantID}
+    `;
+
+    if (variantRecord.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy phiên bản sản phẩm này.",
+      });
+    }
+
+    const currentStock = variantRecord[0].Stock;
+    if (Quantity > currentStock) {
+      return res.status(400).json({
+        success: false,
+        message: `Exceed current stock!`,
+      });
+    }
+
+    let cartRecord = await sql`
+      SELECT "CartID" FROM "cart" WHERE "UserID" = ${userId}
+    `;
+
+    let cartId = cartRecord[0].CartID;
+    const existingItem = await sql`
+      SELECT "CartItemID", "Quantity"
+      FROM "cart_items"
+      WHERE "CartID" = ${cartId} AND "VariantID" = ${VariantID}
+    `;
+    await sql`
+        UPDATE "cart_items"
+        SET "Quantity" = ${Quantity}
+        WHERE "CartItemID" = ${existingItem[0].CartItemID}
+      `;
+    const newQuantity =
+      await sql`SELECT COALESCE(SUM("Quantity"), 0) AS "TotalQuantity"
+                            FROM "cart_items"
+                            WHERE "CartID" = ${cartId};`;
+    // 6. Hoàn tất
+    return res.status(200).json({
+      success: true,
+      message: "Changed Cart quantity!",
+      newQuantity: newQuantity[0].TotalQuantity,
+    });
+  } catch (errpr) {
+    console.error("Lỗi khi thêm vào giỏ hàng:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Lỗi máy chủ nội bộ." });
+  }
+};
+
+const deleteCartItem = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { VariantID } = req.body;
+    if (!VariantID) {
+      return res.status(400).json({
+        success: false,
+        message: "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại ID và số lượng.",
+      });
+    }
+
+    const variantRecord = await sql`
+      SELECT "Stock" FROM "product_variants" WHERE "VariantID" = ${VariantID}
+    `;
+
+    if (variantRecord.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy phiên bản sản phẩm này.",
+      });
+    }
+    let cartRecord = await sql`
+      SELECT "CartID" FROM "cart" WHERE "UserID" = ${userId}
+    `;
+
+    let cartId = cartRecord[0].CartID;
+    await sql`
+      DELETE 
+      FROM "cart_items"
+      WHERE "CartID" = ${cartId} AND "VariantID" = ${VariantID}
+    `;
+    return res.status(200).json({
+      success: true,
+      message: "Deleted Item",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+module.exports = { getCart, addToCart, changeItemQuantity, deleteCartItem };

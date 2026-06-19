@@ -45,7 +45,10 @@ export default function Header() {
           </div>
         </div>
         <div className="flex flex-row items-center gap-7">
-          <button onClick={() => router.push("/cart")} className="relative">
+          <button
+            onClick={() => router.push("/cart")}
+            className="relative cursor-pointer"
+          >
             <ShoppingCart className="w-8 h-8 text-[#FFEBCC]" />
             <div
               className={clsx(
@@ -54,6 +57,7 @@ export default function Header() {
               )}
             >
               {user?.cartQuantity}
+              {/* {JSON.stringify(user?.cartQuantity, null, 2)} */}
             </div>
           </button>
           <button
