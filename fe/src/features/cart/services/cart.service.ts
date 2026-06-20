@@ -105,7 +105,7 @@ export const CartService: CartService = {
     const response = await fetchWithAuth(
       "http://localhost:8000/api/cart/delete",
       {
-        method: "PUT",
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
