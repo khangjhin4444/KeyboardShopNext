@@ -1,5 +1,10 @@
 "use client";
-import { CircleUser, Search, ShoppingCart } from "lucide-react";
+import {
+  CircleUserRound,
+  ReceiptText,
+  Search,
+  ShoppingCart,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
@@ -7,8 +12,20 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/userStore";
 import { useState, useEffect } from "react";
-import { hidden } from "next/dist/lib/picocolors";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  CreditCardIcon,
+  LogOutIcon,
+  SettingsIcon,
+  UserIcon,
+} from "lucide-react";
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
@@ -52,7 +69,7 @@ export default function Header() {
             <ShoppingCart className="w-8 h-8 text-[#FFEBCC]" />
             <div
               className={clsx(
-                "absolute -right-2 -top-2 bg-gray-300 rounded-full p-2 w-6 h-6  items-center flex justify-center font-bold",
+                "absolute select-none -right-2 -top-2 bg-gray-300 rounded-full p-2 w-6 h-6  items-center flex justify-center font-bold",
                 { hidden: !user },
               )}
             >
@@ -60,15 +77,36 @@ export default function Header() {
               {/* {JSON.stringify(user?.cartQuantity, null, 2)} */}
             </div>
           </button>
-          <button
-            className=" cursor-pointer"
-            onClick={() => {
-              logout();
-              router.push("/login");
-            }}
-          >
-            <CircleUser className="w-8 h-8 text-[#FFEBCC]" />
-          </button>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <CircleUserRound className="text-white w-8 h-8" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-30">
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  <UserIcon />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/orders")}>
+                  <ReceiptText />
+                  Oders
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => {
+                    logout();
+                    router.push("/login");
+                  }}
+                >
+                  <LogOutIcon />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <div className="hidden sm:flex sm:flex-row">
@@ -79,7 +117,7 @@ export default function Header() {
             "font-bold": pathname === "/home",
           })}
         >
-          <p className="text-lg ">Home</p>
+          <p className="text-lg select-none">Home</p>
         </Link>
         <Link
           href="/about"
@@ -88,7 +126,7 @@ export default function Header() {
             "font-bold": pathname === "/about",
           })}
         >
-          <p className="text-lg">About</p>
+          <p className="text-lg select-none">About</p>
         </Link>
         <Link
           href="/services"
@@ -97,7 +135,7 @@ export default function Header() {
             "font-bold": pathname === "/services",
           })}
         >
-          <p className="text-lg">Services</p>
+          <p className="text-lg select-none">Services</p>
         </Link>
         <Link
           href="/contact"

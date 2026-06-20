@@ -25,4 +25,28 @@ export const CartUsecase = {
   deleteCartItem: ({ VariantID }: { VariantID: number }) => {
     return CartService.deleteCartItem({ VariantID });
   },
+  placeOrder: ({
+    name,
+    phone,
+    address,
+    shipping,
+    payment,
+    total,
+  }: {
+    name: string;
+    phone: string;
+    address: string;
+    shipping: string;
+    payment: string;
+    total: number;
+  }) => {
+    return CartService.placeOrder({
+      name,
+      phone,
+      address,
+      shipping,
+      payment,
+      total,
+    });
+  },
 };

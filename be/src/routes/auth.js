@@ -81,6 +81,9 @@ router.post("/login", async (req, res) => {
         id: currentUser.UserID,
         username: currentUser.Username,
         cartQuantity: cartQuantity,
+        Name: currentUser.Name,
+        Phone: currentUser.Phone,
+        Address: currentUser.Address,
       },
     });
   } catch (error) {

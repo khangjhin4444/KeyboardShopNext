@@ -20,3 +20,8 @@ export interface ChangeItemQuantityResponseModel {
   message: string;
   newQuantity?: number;
 }
+
+export interface PlaceOrderResponseModel {
+  success: boolean;
+  message: string;
+}

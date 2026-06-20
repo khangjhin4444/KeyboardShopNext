@@ -3,6 +3,7 @@ import {
   CartItemsResponseModel,
   ChangeItemQuantityResponseModel,
   DeleteCartItemResponseModel,
+  PlaceOrderResponseModel,
 } from "../models/cart.model";
 
 export interface AddToCartResponseEntity {
@@ -36,6 +37,11 @@ export interface DeleteCartItemResponseEntity {
 
 export interface CartItemResponseEntity {
   items: CartItemEntity[];
+}
+
+export interface PlaceOrderResponseEntity {
+  success: boolean;
+  message: string;
 }
 
 export function convertToCartItemEntity(
@@ -73,5 +79,14 @@ export function convertToDeleteCartItemResponseEntity(
     success: responseModel.success,
     message: responseModel.message,
     newQuantity: responseModel.newQuantity,
+  };
+}
+
+export function convertToPlaceOrderResponseEntity(
+  responseModel: PlaceOrderResponseModel,
+): PlaceOrderResponseEntity {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
   };
 }

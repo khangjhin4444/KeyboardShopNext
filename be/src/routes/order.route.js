@@ -1,20 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middlewares/verifyToken");
-const cartController = require("../controllers/cart.controller");
+const orderController = require("../controllers/order.controller");
 
 // 🌟 DÙNG TOÀN CỤC CHO FILE NÀY: Mọi API bên dưới dòng này đều tự động được bảo vệ!
 router.use(verifyToken);
 
 // GET: /api/cart -> Xem giỏ hàng
-router.get("/", cartController.getCart);
+router.get("/", orderController.getOrders);
 
-router.post("/add", cartController.addToCart);
+// router.post("/add", orderController.addToCart);
 
-router.put("/change", cartController.changeItemQuantity);
+// router.put("/change", orderController.changeItemQuantity);
 
-router.put("/delete", cartController.deleteCartItem);
-
-router.post("/checkout", cartController.placeOrder);
+// router.put("/delete", orderController.deleteCartItem);
 
 module.exports = router;

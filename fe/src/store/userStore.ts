@@ -6,6 +6,9 @@ interface UserState {
     id: number;
     username: string;
     cartQuantity: number;
+    Name: string;
+    Phone: string;
+    Address: string;
   } | null;
   isAuth: boolean;
   login: (userData: any) => void;

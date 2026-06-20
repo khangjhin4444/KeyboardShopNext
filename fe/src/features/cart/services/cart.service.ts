@@ -8,7 +8,9 @@ import {
   convertToCartItemEntity,
   convertToChangeItemQuantityResponseEntity,
   convertToDeleteCartItemResponseEntity,
+  convertToPlaceOrderResponseEntity,
   DeleteCartItemResponseEntity,
+  PlaceOrderResponseEntity,
 } from "../entities/cart.entity";
 
 type AddToCart = ({
@@ -35,11 +37,28 @@ type DeleteCartItem = ({
 
 type GetCartItems = () => Promise<CartItemResponseEntity>;
 
+type PlaceOrder = ({
+  name,
+  phone,
+  address,
+  shipping,
+  payment,
+  total,
+}: {
+  name: string;
+  phone: string;
+  address: string;
+  shipping: string;
+  payment: string;
+  total: number;
+}) => Promise<PlaceOrderResponseEntity>;
+
 type CartService = {
   addToCart: AddToCart;
   getCartItems: GetCartItems;
   changeQuantity: ChangeItemQuantity;
   deleteCartItem: DeleteCartItem;
+  placeOrder: PlaceOrder;
 };
 
 export const CartService: CartService = {
@@ -94,5 +113,40 @@ export const CartService: CartService = {
       },
     );
     return convertToDeleteCartItemResponseEntity(response);
+  },
+  placeOrder: async function ({
+    name,
+    phone,
+    address,
+    shipping,
+    payment,
+    total,
+  }: {
+    name: string;
+    phone: string;
+    address: string;
+    shipping: string;
+    payment: string;
+    total: number;
+  }) {
+    const response = await fetchWithAuth(
+      "http://localhost:8000/api/cart/checkout",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          phone,
+          address,
+          shipping,
+          payment,
+          total,
+        }),
+      },
+    );
+
+    return convertToPlaceOrderResponseEntity(response);
   },
 };

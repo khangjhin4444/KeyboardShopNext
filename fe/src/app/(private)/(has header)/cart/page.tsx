@@ -76,7 +76,12 @@ export default function CartPage() {
               Total: {formatter.format(grandTotal)} VND
             </div>
 
-            <button className="bg-[#3B9AB8] text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-600 transition cursor-pointer">
+            <button
+              onClick={() => {
+                router.push("/checkout");
+              }}
+              className="bg-[#3B9AB8] text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-600 transition cursor-pointer"
+            >
               Process Payment
             </button>
           </div>
