@@ -9,6 +9,8 @@ router.use(verifyToken);
 // GET: /api/cart -> Xem giỏ hàng
 router.get("/", orderController.getOrders);
 
+router.put("/cancel", orderController.cancelOrder);
+
 // router.post("/add", orderController.addToCart);
 
 // router.put("/change", orderController.changeItemQuantity);

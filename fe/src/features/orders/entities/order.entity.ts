@@ -1,7 +1,11 @@
-import { OrdersResponseModel } from "../models/orders.response";
+import {
+  CancelOrderResponseModel,
+  OrdersResponseModel,
+} from "../models/orders.response";
 
 export interface OrdersResponseEntity {
   orders: OrderEntity[];
+  length: number;
 }
 
 export interface OrderItemEntity {
@@ -24,7 +28,13 @@ export interface OrderEntity {
   Phone: number;
   Address: number;
   Total: number;
+  Request: string;
   items: OrderItemEntity[];
+}
+
+export interface CancelOrderResponseEntity {
+  success: boolean;
+  message: string;
 }
 
 export function convertToOrdersResponseEntity(
@@ -32,5 +42,15 @@ export function convertToOrdersResponseEntity(
 ): OrdersResponseEntity {
   return {
     orders: responeModel.data,
+    length: responeModel.length,
+  };
+}
+
+export function convertToCancelOrderResponseEntity(
+  responseModel: CancelOrderResponseModel,
+): CancelOrderResponseEntity {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
   };
 }

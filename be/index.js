@@ -2,6 +2,7 @@ require("dotenv").config();
 const authRouter = require("./src/routes/auth");
 const cartRouter = require("./src/routes/cart.route");
 const productRouter = require("./src/routes/product.route");
+const orderRouter = require("./src/routes/order.route");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/products", productRouter);
+app.use("/api/orders", orderRouter);
 
 const sql = neon(process.env.DATABASE_URL);
 

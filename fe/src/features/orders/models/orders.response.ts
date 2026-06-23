@@ -2,6 +2,11 @@ import { OrderEntity } from "../entities/order.entity";
 
 export interface OrdersResponseModel {
   success: boolean;
-  message: string;
+  length: number;
   data: OrderEntity[];
+}
+
+export interface CancelOrderResponseModel {
+  success: boolean;
+  message: string;
 }
