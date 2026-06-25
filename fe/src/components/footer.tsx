@@ -1,0 +1,38 @@
+export default function Footer() {
+  return (
+    <footer className="mt-10 border-t bg-[#8CC0EB] text-[#FFEBCC]">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <h3 className="text-2xl font-bold mb-6 text-left">JK Keyboard</h3>
+
+        <div className="flex flex-col md:flex-row items-start justify-between gap-8">
+          {/* Cột thông tin */}
+          <div className="text-left space-y-2 text-gray-700">
+            <p className="font-semibold text-black">
+              Owner: Nguyen Le Duy Khang
+            </p>
+            <p>Ha Noi Branch: 102 Đ. Trần Phú, P. Mộ Lao, Hà Đông, TP.Hà Nội</p>
+            <p>Ho Chi Minh Branch: 497 Hòa Hảo, Phường 7, Quận 10, TP.HCM</p>
+          </div>
+
+          {/* Cột Facebook Iframe */}
+          <div className="w-full md:w-auto overflow-hidden">
+            <iframe
+              src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D61575185811123&tabs&width=340&height=130&small_header=false&adapt_container_width=false&hide_cover=false&show_facepile=false&appId"
+              width="340"
+              height="130"
+              style={{ border: "none", overflow: "hidden" }}
+              scrolling="no"
+              frameBorder="0"
+              allowFullScreen={true}
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+            ></iframe>
+          </div>
+        </div>
+
+        <p className="text-lg mt-8 mb-0 text-gray-500">
+          &copy; 2026 My Website. All Rights Reserved.
+        </p>
+      </div>
+    </footer>
+  );
+}

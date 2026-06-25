@@ -26,10 +26,20 @@ import {
   SettingsIcon,
   UserIcon,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import EditProfileForm from "./edit-profile-form";
+
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuth, logout } = useUserStore();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {
@@ -48,6 +58,9 @@ export default function Header() {
           alt="Logo"
           width={60}
           height={60}
+          onClick={() => {
+            router.push("/home");
+          }}
         />
         <div className="relative w-[50%] flex justify-center ">
           <input
@@ -77,36 +90,52 @@ export default function Header() {
               {/* {JSON.stringify(user?.cartQuantity, null, 2)} */}
             </div>
           </button>
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <CircleUserRound className="text-white w-8 h-8" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-30">
-              <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <UserIcon />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/orders")}>
-                  <ReceiptText />
-                  Oders
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => {
-                    logout();
-                    router.push("/login");
-                  }}
-                >
-                  <LogOutIcon />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <CircleUserRound className="text-white w-8 h-8 cursor-pointer" />
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent className="w-30">
+                <DropdownMenuGroup>
+                  <DialogTrigger asChild>
+                    <DropdownMenuItem>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                  </DialogTrigger>
+
+                  <DropdownMenuItem onClick={() => router.push("/orders")}>
+                    <ReceiptText className="mr-2 h-4 w-4" />
+                    Orders
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+
+                <DropdownMenuSeparator />
+
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => {
+                      logout();
+                      router.push("/login");
+                    }}
+                  >
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>User Profile</DialogTitle>
+              </DialogHeader>
+
+              <EditProfileForm onSuccess={() => setIsDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <div className="hidden sm:flex sm:flex-row">
@@ -127,15 +156,6 @@ export default function Header() {
           })}
         >
           <p className="text-lg select-none">About</p>
-        </Link>
-        <Link
-          href="/services"
-          className={clsx("text-[#FFEBCC] dark:text-zinc-50  mx-4", {
-            underline: pathname === "/services",
-            "font-bold": pathname === "/services",
-          })}
-        >
-          <p className="text-lg select-none">Services</p>
         </Link>
         <Link
           href="/contact"

@@ -1,3 +1,4 @@
+import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 export default function Layout({
@@ -7,6 +8,7 @@ export default function Layout({
     <TooltipProvider>
       <Header />
       {children}
+      <Footer />
     </TooltipProvider>
   );
 }

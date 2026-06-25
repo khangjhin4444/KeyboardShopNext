@@ -3,6 +3,7 @@ const authRouter = require("./src/routes/auth");
 const cartRouter = require("./src/routes/cart.route");
 const productRouter = require("./src/routes/product.route");
 const orderRouter = require("./src/routes/order.route");
+const userRouter = require("./src/routes/user.route");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -25,8 +26,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/products", productRouter);
 app.use("/api/orders", orderRouter);
-
-const sql = neon(process.env.DATABASE_URL);
+app.use("/api/user", userRouter);
 
 // Khởi chạy Server
 app.listen(PORT, () => {

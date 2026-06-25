@@ -29,7 +29,7 @@ export default function Category() {
   return (
     <div className="justify-around items-center w-full flex flex-row mt-5">
       {data.map((item) => (
-        <DropdownMenu key={item.type}>
+        <DropdownMenu key={item.type} modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="text-xl p-4">
               {item.type}

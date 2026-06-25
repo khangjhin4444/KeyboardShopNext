@@ -1,3 +1,4 @@
+import { string } from "zod";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 // Định nghĩa khung dữ liệu cho User
@@ -14,6 +15,7 @@ interface UserState {
   login: (userData: any) => void;
   logout: () => Promise<void>;
   updateCartQuantity: (quantity: number) => void;
+  updateUserInformation: (address: string, name: string, phone: string) => void;
 }
 
 // Khởi tạo kho lưu trữ
@@ -48,6 +50,21 @@ export const useUserStore = create<UserState>()(
             ? {
                 ...state.user,
                 cartQuantity: newQuantity,
+              }
+            : null,
+        })),
+      updateUserInformation: (
+        newAddress: string,
+        newName: string,
+        newPhone: string,
+      ) =>
+        set((state) => ({
+          user: state.user
+            ? {
+                ...state.user,
+                Address: newAddress,
+                Name: newName,
+                Phone: newPhone,
               }
             : null,
         })),
