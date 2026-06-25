@@ -17,6 +17,18 @@ type GetProducts = ({
   sort: string;
 }) => Promise<ProductEntity[]>;
 
+type GetProductsCategory = ({
+  type,
+  page,
+  sort,
+  sub,
+}: {
+  type: string;
+  page: number;
+  sort: string;
+  sub: string;
+}) => Promise<ProductEntity[]>;
+
 type GetProductDetail = ({
   id,
 }: {
@@ -35,6 +47,7 @@ type ProductServiceType = {
   getProducts: GetProducts;
   getProductDetail: GetProductDetail;
   getRelevantProducts: GetRelevantProducts;
+  getProductsCategory: GetProductsCategory;
 };
 
 export const ProductService: ProductServiceType = {
@@ -96,6 +109,38 @@ export const ProductService: ProductServiceType = {
     } catch (err) {
       console.log(err);
       throw err;
+    }
+  },
+  getProductsCategory: async function ({
+    type,
+    page,
+    sort,
+    sub,
+  }: {
+    type: string;
+    page: number;
+    sort: string;
+    sub: string;
+  }) {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/products?type=${type}&page=${page}&limit=8&sort=${sort}&sub=${sub}`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Lỗi tải dữ liệu");
+      }
+
+      const result = await response.json();
+      const data = result.data.map((item: ProductEntity) =>
+        convertToProductEntity(item),
+      );
+      // Sau khi lấy dữ liệu thành công, return về đúng kiểu dữ liệu đã hứa (Product[])
+      return data;
+    } catch (error) {
+      console.error("Lỗi khi call API:", error);
+      // Nếu có lỗi, Promise chuyển sang trạng thái Thất bại (Rejected)
+      throw error;
     }
   },
 };

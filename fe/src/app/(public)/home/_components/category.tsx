@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,7 +8,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 export default function Category() {
+  const router = useRouter();
   const data = [
     {
       type: "Keyboard Kit",
@@ -15,7 +18,7 @@ export default function Category() {
     },
     {
       type: "Keycap",
-      options: ["Profile Cherry", "Profile MDA", "Profile SA", "Artisan"],
+      options: ["Cherry", "MDA", "SA", "Artisan"],
     },
     {
       type: "Switch",
@@ -40,8 +43,20 @@ export default function Category() {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             {item.options.map((opt) => (
-              <DropdownMenuItem key={opt} className="text-lg">
-                {opt}
+              <DropdownMenuItem
+                key={opt}
+                className="text-lg"
+                onClick={() =>
+                  router.push(
+                    `/category/${item.type === "Keyboard Kit" ? "KeyboardKit" : item.type}/${opt}`,
+                  )
+                }
+              >
+                {item.type === "Keycap"
+                  ? opt === "Artisan"
+                    ? opt
+                    : `Profile ${opt}`
+                  : opt}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

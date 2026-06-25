@@ -3,8 +3,6 @@ import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
 import { Variant } from "@/features/products/entities/product.entity";
 import { ProductUsecase } from "@/features/products/usecase/products.usecase";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Minus, Plus } from "lucide-react";
-import { variantPriorityOrder } from "motion";
 import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";

@@ -18,4 +18,17 @@ export const ProductUsecase = {
   getRelevantProducts: (id: number, type: string) => {
     return ProductService.getRelevantProducts({ id, type });
   },
+  getProductsCategory: ({
+    type,
+    page,
+    sort,
+    sub,
+  }: {
+    type: string;
+    page: number;
+    sort: string;
+    sub: string;
+  }) => {
+    return ProductService.getProductsCategory({ type, page, sort, sub });
+  },
 };

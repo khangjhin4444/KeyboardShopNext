@@ -6,6 +6,7 @@ const getProducts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 8;
     const sort = req.query.sort || "default";
+    const sub = req.query.sub || null;
     const offset = (page - 1) * limit;
 
     // Lúc này bạn có thể tự do ORDER BY theo bất cứ trường nào bạn muốn!
@@ -21,7 +22,7 @@ const getProducts = async (req, res) => {
     }
 
     let products;
-    if (type) {
+    if (!sub) {
       products = await sql`
         SELECT * FROM (
           SELECT DISTINCT ON (p."ProductID") 
@@ -53,8 +54,9 @@ const getProducts = async (req, res) => {
               pv."Price" AS "Price"
           FROM "product" p
           LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
+          WHERE p."ProductType" = ${type} AND p."SubType" = ${sub}
           ORDER BY p."ProductID" ASC, pv."Color" ASC
-        ) as all_products
+        ) as standard_products
         ORDER BY ${orderBySql}
         LIMIT ${limit} OFFSET ${offset}
       `;
