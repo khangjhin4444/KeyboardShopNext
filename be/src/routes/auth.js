@@ -42,6 +42,9 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Sai tài khoản" });
 
     const currentUser = user[0];
+    console.log(currentUser);
+    const role = currentUser.Username === "admin" ? "admin" : "user";
+    console.log(role);
     const cartQuantityResult =
       await sql`SELECT COALESCE(SUM(ci."Quantity"), 0) AS total_quantity
                               FROM "cart" c
@@ -72,6 +75,12 @@ router.post("/login", async (req, res) => {
       sameSite: "Strict",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
+    res.cookie("role", role, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+    });
 
     // 4. Trả Access Token về dạng JSON để Frontend lưu tạm
     res.status(200).json({
@@ -85,6 +94,7 @@ router.post("/login", async (req, res) => {
         Phone: currentUser.Phone,
         Address: currentUser.Address,
       },
+      role: role,
     });
   } catch (error) {
     console.log(error);

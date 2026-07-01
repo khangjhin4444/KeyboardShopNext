@@ -38,9 +38,13 @@ export default function AuthPage() {
         localStorage.setItem("accessToken", data.accessToken);
         loginAction(data.user);
         console.log("Login", data.user);
-        router.push("/home"); // Chuyển vào vùng private
+        if (data.role === "admin") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/home");
+        }
       } else {
-        setErrorMsg(data.message || "Sai tài khoản hoặc mật khẩu");
+        setErrorMsg("Wrong username or password");
       }
     } catch (err) {
       setErrorMsg("Lỗi kết nối đến máy chủ");

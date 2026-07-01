@@ -10,6 +10,7 @@ interface UserState {
     Name: string;
     Phone: string;
     Address: string;
+    role: string;
   } | null;
   isAuth: boolean;
   login: (userData: any) => void;

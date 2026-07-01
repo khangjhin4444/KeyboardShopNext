@@ -5,8 +5,8 @@ import {
   convertToOrdersResponseEntity,
   OrdersResponseEntity,
 } from "../entities/order.entity";
-
-type GetOrders = () => Promise<OrdersResponseEntity>;
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
+type GetOrders = (status: string) => Promise<OrdersResponseEntity>;
 type CancleOrder = ({
   orderID,
 }: {
@@ -19,9 +19,11 @@ type OrderService = {
 };
 
 export const OrderService: OrderService = {
-  getOrders: async function () {
+  getOrders: async function (status: string) {
     try {
-      const response = await fetchWithAuth("http://localhost:8000/api/orders");
+      const response = await fetchWithAuth(
+        `${API_URL}/api/orders?status=${status}`,
+      );
       return convertToOrdersResponseEntity(response);
     } catch (error) {
       console.log(error);
@@ -30,18 +32,15 @@ export const OrderService: OrderService = {
   },
   cancelOrder: async function ({ orderID }: { orderID: number }) {
     try {
-      const response = await fetchWithAuth(
-        `http://localhost:8000/api/orders/cancel`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            orderID,
-          }),
+      const response = await fetchWithAuth(`${API_URL}/api/orders/cancel`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          orderID,
+        }),
+      });
       return convertToCancelOrderResponseEntity(response);
     } catch (error) {
       console.log(error);

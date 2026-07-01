@@ -163,4 +163,65 @@ const getRelevantProduct = async (req, res) => {
   }
 };
 
-module.exports = { getProductByID, getProducts, getRelevantProduct };
+const getProductsAdmin = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const products = await sql`
+      WITH VariantList AS (
+        SELECT 
+          "ProductID",
+          json_agg(
+            json_build_object(
+              'VariantID', "VariantID",
+              'Color', "Color",
+              'Price', "Price",
+              'Stock', "Stock",
+              'MainImage', "MainImage"
+            )
+          ) AS variants
+        FROM "product_variants"
+        GROUP BY "ProductID"
+      ),
+      ImageList AS (
+        SELECT 
+          "ProductID",
+          json_agg("ImageUrl") AS images
+        FROM "product_images"
+        GROUP BY "ProductID"
+      )
+      SELECT 
+        p."ProductID",
+        p."Name",
+        p."Description",
+        p."ProductType",
+        p."SubType",
+        COALESCE(v.variants, '[]'::json) AS variants,
+        COALESCE(i.images, '[]'::json) AS images
+      FROM "product" p
+      LEFT JOIN VariantList v ON p."ProductID" = v."ProductID"
+      LEFT JOIN ImageList i ON p."ProductID" = i."ProductID"
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    res.status(200).json({
+      success: true,
+      currentPage: page,
+      limit: limit,
+      count: products.length,
+      data: products,
+    });
+  } catch (error) {
+    console.error("❌ Lỗi phân trang:", error);
+    res.status(500).json({ success: false, message: "Lỗi lấy dữ liệu!" });
+  }
+};
+
+module.exports = {
+  getProductByID,
+  getProducts,
+  getRelevantProduct,
+  getProductsAdmin,
+};

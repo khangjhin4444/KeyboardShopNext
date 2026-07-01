@@ -5,6 +5,8 @@ const verifyToken = require("../middlewares/verifyToken");
 
 router.get("/", productController.getProducts);
 router.get("/relevant", verifyToken, productController.getRelevantProduct);
+
+router.get("/admin", productController.getProductsAdmin);
 router.get("/:id", verifyToken, productController.getProductByID);
 
 module.exports = router;

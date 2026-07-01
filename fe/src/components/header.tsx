@@ -87,55 +87,61 @@ export default function Header() {
               )}
             >
               {user?.cartQuantity}
-              {/* {JSON.stringify(user?.cartQuantity, null, 2)} */}
             </div>
           </button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <CircleUserRound className="text-white w-8 h-8 cursor-pointer" />
-              </DropdownMenuTrigger>
 
-              <DropdownMenuContent className="w-30">
-                <DropdownMenuGroup>
-                  <DialogTrigger asChild>
-                    <DropdownMenuItem>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      Profile
+          {isAuth ? (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <CircleUserRound className="text-white w-8 h-8 cursor-pointer" />
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-30">
+                  <DropdownMenuGroup>
+                    <DialogTrigger asChild>
+                      <DropdownMenuItem>
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        Profile
+                      </DropdownMenuItem>
+                    </DialogTrigger>
+
+                    <DropdownMenuItem onClick={() => router.push("/orders")}>
+                      <ReceiptText className="mr-2 h-4 w-4" />
+                      Orders
                     </DropdownMenuItem>
-                  </DialogTrigger>
+                  </DropdownMenuGroup>
 
-                  <DropdownMenuItem onClick={() => router.push("/orders")}>
-                    <ReceiptText className="mr-2 h-4 w-4" />
-                    Orders
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
 
-                <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => {
+                        logout();
+                        router.push("/login");
+                      }}
+                    >
+                      <LogOutIcon className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => {
-                      logout();
-                      router.push("/login");
-                    }}
-                  >
-                    <LogOutIcon className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>User Profile</DialogTitle>
+                </DialogHeader>
 
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>User Profile</DialogTitle>
-              </DialogHeader>
-
-              <EditProfileForm onSuccess={() => setIsDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
+                <EditProfileForm onSuccess={() => setIsDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          ) : (
+            <button onClick={() => router.push("/login")}>
+              <CircleUserRound className="text-white w-8 h-8 cursor-pointer" />
+            </button>
+          )}
         </div>
       </div>
       <div className="hidden sm:flex sm:flex-row">
