@@ -4,6 +4,7 @@ const sql = neon(process.env.DATABASE_URL);
 const getOrders = async (req, res) => {
   try {
     const currentUserId = req.userId;
+    const status = req.query.status;
     const orders = await sql`
       SELECT 
         o."OrderID",
@@ -31,7 +32,7 @@ const getOrders = async (req, res) => {
         JOIN "order_items" oi ON o."OrderID" = oi."OrderID"
         JOIN "product_variants" pv ON oi."VariantID" = pv."VariantID"
         JOIN "product" p ON pv."ProductID" = p."ProductID"
-        WHERE o."UserID" = ${currentUserId}
+        WHERE o."UserID" = ${currentUserId} AND o."Status" = ${status}
         GROUP BY o."OrderID"
         ORDER BY o."Date" DESC;`;
     return res.status(200).json({

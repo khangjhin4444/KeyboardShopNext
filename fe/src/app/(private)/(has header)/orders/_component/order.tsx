@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { OrderEntity } from "@/features/orders/entities/order.entity";
 import { OrderUsecase } from "@/features/orders/usecase/order.usecase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -26,10 +27,7 @@ export default function Order({ order }: { order: OrderEntity }) {
     }
   };
   return (
-    <div
-      key={order.OrderID}
-      className="flex flex-col lg:flex-row border-b-2 border-black p-5 gap-8"
-    >
+    <Card key={order.OrderID} className="flex flex-col lg:flex-row p-5 gap-8">
       {/* CỘT TRÁI: DANH SÁCH SẢN PHẨM TRONG ĐƠN */}
       <div className="w-full lg:w-1/2">
         <div
@@ -136,6 +134,6 @@ export default function Order({ order }: { order: OrderEntity }) {
           </button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

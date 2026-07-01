@@ -4,25 +4,39 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoaderCircle } from "lucide-react";
 import { OrderEntity } from "@/features/orders/entities/order.entity";
 import { OrderUsecase } from "@/features/orders/usecase/order.usecase";
-import { toast } from "sonner";
-import { clsx } from "clsx";
-import { M_PLUS_1 } from "next/font/google";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Order from "./_component/order";
 
 export default function OrdersPage() {
   // 1. Lấy dữ liệu đơn hàng
   const {
-    data: orders,
-    isLoading,
-    isError,
+    data: pendingData,
+    isLoading: isPendingLoading,
+    isSuccess: isPendingSuccess,
+    isError: isPendingError,
   } = useQuery({
-    queryKey: ["user-orders"],
-    queryFn: () => OrderUsecase.getOrders(), // Hàm gọi API GET /api/orders
+    queryKey: ["user-orders", "pending"],
+    queryFn: () => OrderUsecase.getOrders("Pending"),
   });
-  console.log(orders);
+  const { data: deliveredData } = useQuery({
+    queryKey: ["user-orders", "delivered"],
+    queryFn: () => OrderUsecase.getOrders("Delivered"),
+    enabled: isPendingSuccess,
+  });
 
+  // 3. GỌI API LẤY ĐƠN CANCELED (Chạy ngầm ở background)
+  const { data: canceledData } = useQuery({
+    queryKey: ["user-orders", "canceled"],
+    queryFn: () => OrderUsecase.getOrders("Canceled"),
+    enabled: isPendingSuccess,
+  });
+  const { data: declinedData } = useQuery({
+    queryKey: ["user-orders", "declined"],
+    queryFn: () => OrderUsecase.getOrders("Declined"),
+    enabled: isPendingSuccess,
+  });
   // Trạng thái Loading
-  if (isLoading) {
+  if (isPendingLoading) {
     return (
       <div className="flex justify-center items-center h-screen w-full">
         <LoaderCircle className="animate-spin text-[#3B9AB8]" size={48} />
@@ -30,32 +44,80 @@ export default function OrdersPage() {
     );
   }
 
-  // Trạng thái Lỗi
-  if (isError) {
+  if (isPendingError) {
     return (
       <div className="text-center text-red-500 mt-10">
-        Lỗi tải danh sách đơn hàng!
+        Failed to load orders!
       </div>
     );
   }
 
+  const OrderList = ({ data }: { data: any }) => {
+    if (!data) {
+      return (
+        <div className="flex justify-center py-20">
+          <LoaderCircle className="animate-spin text-gray-400" size={32} />
+        </div>
+      );
+    }
+
+    const orderList = data.orders || [];
+
+    if (orderList.length === 0) {
+      return (
+        <div className="text-3xl font-bold text-center py-20 text-gray-500">
+          No orders found!
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-8 mt-6">
+        {orderList.map((order: OrderEntity) => (
+          <Order order={order} key={order.OrderID} />
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 font-sans pb-20">
-      <div className="text-left mb-6 border-b-2 border-black pb-2 mt-8">
+    <div className="w-full mx-auto pt-3  p-20">
+      <div className="text-left mb-6  pb-2 mt-8">
         <h2 className="text-3xl font-bold">Your Orders</h2>
       </div>
 
-      <div className="flex flex-col gap-8">
-        {!orders || orders.length === 0 ? (
-          <div className="text-3xl font-bold text-center py-20 text-gray-500">
-            No orders found!
-          </div>
-        ) : (
-          orders.orders.map((order: OrderEntity) => (
-            <Order order={order} key={order.OrderID}></Order>
-          ))
-        )}
-      </div>
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="flex justify-center w-full">
+          <TabsTrigger className="text-xl" value="pending">
+            Pending
+          </TabsTrigger>
+          <TabsTrigger className="text-xl" value="delivered">
+            Delivered
+          </TabsTrigger>
+          <TabsTrigger className="text-xl" value="canceled">
+            Canceled
+          </TabsTrigger>
+          <TabsTrigger className="text-xl" value="declined">
+            Declined
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending">
+          <OrderList data={pendingData} />
+        </TabsContent>
+
+        <TabsContent value="delivered">
+          <OrderList data={deliveredData} />
+        </TabsContent>
+
+        <TabsContent value="canceled">
+          <OrderList data={canceledData} />
+        </TabsContent>
+
+        <TabsContent value="declined">
+          <OrderList data={declinedData} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
