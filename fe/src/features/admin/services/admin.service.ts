@@ -39,7 +39,6 @@ export const AdminService: AdminServiceType = {
         `${API_URL}/api/products/admin?type=${type}&page=${page}`,
       );
 
-      console.log(result);
       return convertToProductDetailEntity(result.data);
     } catch (error) {
       console.error("Lỗi khi call API:", error);
