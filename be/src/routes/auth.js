@@ -42,9 +42,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Sai tài khoản" });
 
     const currentUser = user[0];
-    console.log(currentUser);
     const role = currentUser.Username === "admin" ? "admin" : "user";
-    console.log(role);
     const cartQuantityResult =
       await sql`SELECT COALESCE(SUM(ci."Quantity"), 0) AS total_quantity
                               FROM "cart" c
@@ -58,12 +56,12 @@ router.post("/login", async (req, res) => {
 
     // 2. Tạo Access Token (sống 15 phút) và Refresh Token (sống 7 ngày)
     const accessToken = jwt.sign(
-      { userId: currentUser.UserID },
+      { userId: currentUser.UserID, role: role },
       process.env.JWT_ACCESS_SECRET,
       { expiresIn: "15m" },
     );
     const refreshToken = jwt.sign(
-      { userId: currentUser.UserID },
+      { userId: currentUser.UserID, role: role },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "7d" },
     );
@@ -127,7 +125,7 @@ router.post("/refresh", (req, res) => {
     // 3. Nếu mọi thứ hợp lệ, 'decoded' sẽ chứa thông tin { userId: ... }
     // Tiến hành tạo Access Token MỚI với hạn sử dụng 15 phút
     const newAccessToken = jwt.sign(
-      { userId: decoded.userId },
+      { userId: decoded.userId, role: decoded.role },
       process.env.JWT_ACCESS_SECRET,
       { expiresIn: "15m" },
     );

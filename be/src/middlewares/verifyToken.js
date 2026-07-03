@@ -18,6 +18,9 @@ const verifyToken = (req, res, next) => {
 
     // LƯU Ý QUAN TRỌNG: Gắn userId lấy được từ token vào req
     req.userId = decoded.userId;
+    req.user = {
+      role: decoded.role,
+    };
     next(); // Cho phép đi tiếp vào Controller
   });
 };
