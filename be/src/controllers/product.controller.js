@@ -166,6 +166,7 @@ const getRelevantProduct = async (req, res) => {
 const getProductsAdmin = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
+    const type = req.query.type || null;
     const limit = 10;
     const offset = (page - 1) * limit;
 
@@ -203,6 +204,8 @@ const getProductsAdmin = async (req, res) => {
       FROM "product" p
       LEFT JOIN VariantList v ON p."ProductID" = v."ProductID"
       LEFT JOIN ImageList i ON p."ProductID" = i."ProductID"
+      WHERE p."ProductType" = ${type}
+      ORDER BY p."SubType" ASC,p."ProductID" ASC
       LIMIT ${limit} OFFSET ${offset}
     `;
 
@@ -219,9 +222,34 @@ const getProductsAdmin = async (req, res) => {
   }
 };
 
+const deleteProductAdmin = async (req, res) => {
+  try {
+    const variantId = req.params.id;
+    const deleteProduct = await sql`
+  WITH deleted_variant AS (
+    DELETE FROM "product_variants" 
+    WHERE "VariantID" = ${variantId}
+    RETURNING "ProductID"
+  )
+  SELECT p."ProductType"
+  FROM "product" p
+  INNER JOIN deleted_variant dv ON p."ProductID" = dv."ProductID";
+`;
+    res.status(200).json({
+      success: true,
+      message: "Sản phẩm đã được xóa!",
+      type: deleteProduct[0].ProductType,
+    });
+  } catch (error) {
+    console.error("❌ Lỗi xóa sản phẩm:", error);
+    res.status(500).json({ success: false, message: "Lỗi xóa sản phẩm!" });
+  }
+};
+
 module.exports = {
   getProductByID,
   getProducts,
   getRelevantProduct,
+  deleteProductAdmin,
   getProductsAdmin,
 };
