@@ -1,5 +1,4 @@
 const verifyAdmin = (req, res, next) => {
-  console.log("User role:", req.user.role); // Log the user role for debugging
   if (req.userId && req.user.role === "admin") {
     next();
   } else {
