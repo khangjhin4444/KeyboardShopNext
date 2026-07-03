@@ -1,36 +1,63 @@
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { ProductDetailEntity } from "../entities/admin.entity";
+import {
+  convertToDeleteProductEntity,
+  ProductDetailEntity,
+} from "../entities/admin.entity";
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 import { convertToProductDetailEntity } from "../entities/admin.entity";
+import { DeleteProductResponseModel } from "../models/admin.response";
 
 type GetProductDetail = ({
+  type,
   page,
 }: {
+  type: string;
   page: number;
 }) => Promise<ProductDetailEntity[]>;
 
+type DeleteProductAdmin = ({
+  VariantID,
+}: {
+  VariantID: number;
+}) => Promise<DeleteProductResponseModel>;
+
 type AdminServiceType = {
   getProductDetail: GetProductDetail;
+  deleteProductAdmin: DeleteProductAdmin;
 };
 
 export const AdminService: AdminServiceType = {
-  getProductDetail: async function ({ page }: { page: number }) {
+  getProductDetail: async function ({
+    type,
+    page,
+  }: {
+    type: string;
+    page: number;
+  }) {
     try {
-      const response = await fetch(
-        `${API_URL}/api/products/admin?page=${page}`,
+      const result = await fetchWithAuth(
+        `${API_URL}/api/products/admin?type=${type}&page=${page}`,
       );
 
-      if (!response.ok) {
-        throw new Error("Lỗi tải dữ liệu");
-      }
-
-      const result = await response.json();
       console.log(result);
-      // Sau khi lấy dữ liệu thành công, return về đúng kiểu dữ liệu đã hứa (Product[])
       return convertToProductDetailEntity(result.data);
     } catch (error) {
       console.error("Lỗi khi call API:", error);
-      // Nếu có lỗi, Promise chuyển sang trạng thái Thất bại (Rejected)
+      throw error;
+    }
+  },
+  deleteProductAdmin: async function ({ VariantID }: { VariantID: number }) {
+    try {
+      const result = await fetchWithAuth(
+        `${API_URL}/api/products/admin/${VariantID}`,
+        {
+          method: "DELETE",
+        },
+      );
+      console.log(result);
+      return convertToDeleteProductEntity(result);
+    } catch (error) {
+      console.error("Lỗi khi call API:", error);
       throw error;
     }
   },

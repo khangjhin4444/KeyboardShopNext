@@ -5,7 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ProductDetailEntity } from "@/features/admin/entities/admin.entity";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, X } from "lucide-react";
+import { AlertTriangle, Check, Trash2, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect, useRef, useState } from "react";
 
 const options = [
   { type: "Prebuild", sub: ["75%", "Full Size", "TKL", "Alice"] },
@@ -111,6 +112,58 @@ const EditableCell = ({ getValue, row, column, table }: any) => {
   return <span className="truncate">{initialValue}</span>;
 };
 
+interface ConfirmDeleteButtonProps {
+  onConfirm: () => void;
+  timeout?: number;
+}
+
+const ConfirmDeleteButton = ({
+  onConfirm,
+  timeout = 3000,
+}: ConfirmDeleteButtonProps) => {
+  const [isConfirming, setIsConfirming] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleClick = () => {
+    if (!isConfirming) {
+      setIsConfirming(true);
+      timerRef.current = setTimeout(() => {
+        setIsConfirming(false);
+      }, timeout);
+    } else {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setIsConfirming(false);
+      onConfirm();
+    }
+  };
+  return (
+    <Button
+      size="sm"
+      variant={isConfirming ? "destructive" : "secondary"}
+      onClick={handleClick}
+      className={`transition-all duration-300 w-[90px] h-8 ${
+        isConfirming ? "animate-pulse bg-red-600 text-white" : ""
+      }`}
+    >
+      {isConfirming ? (
+        <>
+          <AlertTriangle className="w-4 h-4 mr-1" /> Sure?
+        </>
+      ) : (
+        <>
+          <Trash2 className="w-4 h-4 mr-1" /> Delete
+        </>
+      )}
+    </Button>
+  );
+};
+
 export const columns: ColumnDef<ProductDetailEntity>[] = [
   { accessorKey: "Name", header: "Name", cell: EditableCell },
   { accessorKey: "ProductType", header: "Product Type", cell: EditableCell },
@@ -120,13 +173,14 @@ export const columns: ColumnDef<ProductDetailEntity>[] = [
   { accessorKey: "Stock", header: "Stock", cell: EditableCell },
   {
     id: "actions",
+    header: () => <div className="text-right">Action</div>,
     cell: ({ row, table }) => {
       const meta = table.options.meta as any;
       const isEditing = meta?.editingRow === row.id;
 
       if (isEditing) {
         return (
-          <div className="flex items-center gap-2">
+          <div className="flex justify-end items-end gap-2">
             <Button
               size="sm"
               className="h-8 px-2 bg-green-600 hover:bg-green-700 text-white"
@@ -147,14 +201,23 @@ export const columns: ColumnDef<ProductDetailEntity>[] = [
       }
 
       return (
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8"
-          onClick={() => meta?.startEdit(row.id, row.original)}
-        >
-          Edit
-        </Button>
+        <div className="flex justify-end items-end gap-2">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8"
+            onClick={() => meta?.startEdit(row.id, row.original)}
+          >
+            Edit
+          </Button>
+          <ConfirmDeleteButton
+            onConfirm={() => {
+              if (meta?.deleteRow) {
+                meta.deleteRow(row.original.VariantID);
+              }
+            }}
+          />
+        </div>
       );
     },
   },

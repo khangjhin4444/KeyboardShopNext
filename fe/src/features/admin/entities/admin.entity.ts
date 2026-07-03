@@ -1,4 +1,7 @@
-import { ProductDetailResponseModel } from "../models/admin.response";
+import {
+  DeleteProductResponseModel,
+  ProductDetailResponseModel,
+} from "../models/admin.response";
 
 export interface Variant {
   VariantID: number;
@@ -19,6 +22,12 @@ export interface ProductDetailEntity {
   Stock: number;
 }
 
+export interface DeleteProductEntity {
+  success: boolean;
+  message: string;
+  type: string;
+}
+
 export const convertToProductDetailEntity = (
   responseModel: ProductDetailResponseModel[],
 ): ProductDetailEntity[] => {
@@ -35,4 +44,14 @@ export const convertToProductDetailEntity = (
     })),
   );
   return data;
+};
+
+export const convertToDeleteProductEntity = (
+  responseModel: DeleteProductResponseModel,
+): DeleteProductEntity => {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
+    type: responseModel.type,
+  };
 };

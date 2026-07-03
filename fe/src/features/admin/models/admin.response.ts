@@ -25,3 +25,9 @@ export interface ProductDetailResponseModel {
   images: string[];
   variants: Variant[];
 }
+
+export interface DeleteProductResponseModel {
+  success: boolean;
+  message: string;
+  type: string;
+}

@@ -20,6 +20,8 @@ import { ProductDetailEntity } from "@/features/products/entities/product.entity
 import { useEffect, useState } from "react";
 import { div } from "motion/react-client";
 import { LoaderCircle } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AdminUsecase } from "@/features/admin/usecase/admin.usecase";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -45,6 +47,22 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<ProductDetailEntity>>({});
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation({
+    mutationFn: async (VariantID: number) =>
+      AdminUsecase.deleteProductAdmin({ VariantID: VariantID }),
+    onSuccess: (data) => {
+      console.log("Xóa thành công!", data);
+      // Tự động load lại bảng sau khi xóa để dữ liệu biến mất
+      queryClient.invalidateQueries({
+        queryKey: ["products-table", data.type],
+      });
+    },
+    onError: (error) => {
+      console.error("Xóa thất bại:", error);
+    },
+  });
+
   const table = useReactTable({
     data,
     columns,
@@ -85,6 +103,14 @@ export function DataTable<TData, TValue>({
           console.error("Lỗi khi lưu:", error);
         }
       },
+      deleteRow: async (variantId: string) => {
+        try {
+          console.log("Đang gửi API xóa với VariantID:", variantId);
+          deleteMutation.mutate(Number(variantId));
+        } catch (error) {
+          console.error("Lỗi khi xóa:", error);
+        }
+      },
     },
   });
   const { pageIndex } = table.getState().pagination;
@@ -97,7 +123,7 @@ export function DataTable<TData, TValue>({
   }, [pageIndex, pageCount, hasNextPage, isFetchingNextPage, fetchNextPage]);
   return (
     <div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border pl-3 pr-3">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
