@@ -1,5 +1,7 @@
 const { neon } = require("@neondatabase/serverless");
+const { Pool } = require("@neondatabase/serverless");
 const sql = neon(process.env.DATABASE_URL);
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const getProducts = async (req, res) => {
   try {
     const type = req.query.type;
@@ -246,10 +248,46 @@ const deleteProductAdmin = async (req, res) => {
   }
 };
 
+const updateProductVariantAdmin = async (req, res) => {
+  const { VariantID, Color, Price, Stock, ProductType, SubType, ProductID } =
+    req.body;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    await sql`
+      UPDATE "product_variants"
+      SET 
+        "Color" = ${Color}, 
+        "Price" = ${Price},
+        "Stock" = ${Stock}
+      WHERE "VariantID" = ${VariantID}
+    `;
+    await sql`
+      UPDATE "product"
+      SET
+        "ProductType" = ${ProductType},
+        "SubType" = ${SubType}
+      WHERE "ProductID" = ${ProductID}
+    `;
+    await client.query("COMMIT");
+    res.status(200).json({
+      success: true,
+      message: "Update success",
+      newType: ProductType,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Error when update" });
+  }
+};
+
 module.exports = {
   getProductByID,
   getProducts,
   getRelevantProduct,
   deleteProductAdmin,
   getProductsAdmin,
+  updateProductVariantAdmin,
 };

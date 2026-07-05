@@ -21,4 +21,11 @@ router.delete(
   productController.deleteProductAdmin,
 );
 
+router.put(
+  "/admin/update",
+  verifyToken,
+  verifyAdmin,
+  productController.updateProductVariantAdmin,
+);
+
 module.exports = router;
