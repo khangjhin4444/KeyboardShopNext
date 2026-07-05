@@ -31,3 +31,9 @@ export interface DeleteProductResponseModel {
   message: string;
   type: string;
 }
+
+export interface UpdateProductVariantAdminResponseModel {
+  success: boolean;
+  message: string;
+  newType: string;
+}

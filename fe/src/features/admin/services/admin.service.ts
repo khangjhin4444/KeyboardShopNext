@@ -1,7 +1,9 @@
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   convertToDeleteProductEntity,
+  convertToUpdateProductVariantAdminEntity,
   ProductDetailEntity,
+  UpdateProductVariantAdminEntity,
 } from "../entities/admin.entity";
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 import { convertToProductDetailEntity } from "../entities/admin.entity";
@@ -21,9 +23,28 @@ type DeleteProductAdmin = ({
   VariantID: number;
 }) => Promise<DeleteProductResponseModel>;
 
+type UpdateProductVariantAdmin = ({
+  VariantID,
+  ProductID,
+  Color,
+  Stock,
+  Price,
+  ProductType,
+  SubType,
+}: {
+  VariantID: number;
+  ProductID: number;
+  Color: string;
+  Stock: number;
+  Price: number;
+  ProductType: string;
+  SubType: string;
+}) => Promise<UpdateProductVariantAdminEntity>;
+
 type AdminServiceType = {
   getProductDetail: GetProductDetail;
   deleteProductAdmin: DeleteProductAdmin;
+  updateProductVariantAdmin: UpdateProductVariantAdmin;
 };
 
 export const AdminService: AdminServiceType = {
@@ -55,6 +76,48 @@ export const AdminService: AdminServiceType = {
       );
       console.log(result);
       return convertToDeleteProductEntity(result);
+    } catch (error) {
+      console.error("Lỗi khi call API:", error);
+      throw error;
+    }
+  },
+  updateProductVariantAdmin: async function ({
+    VariantID,
+    ProductID,
+    Color,
+    Stock,
+    Price,
+    ProductType,
+    SubType,
+  }: {
+    VariantID: number;
+    ProductID: number;
+    Color: string;
+    Stock: number;
+    Price: number;
+    ProductType: string;
+    SubType: string;
+  }) {
+    try {
+      const result = await fetchWithAuth(
+        `${API_URL}/api/products/admin/update`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ProductID,
+            Color,
+            Stock,
+            Price,
+            ProductType,
+            SubType,
+            VariantID,
+          }),
+        },
+      );
+      return convertToUpdateProductVariantAdminEntity(result);
     } catch (error) {
       console.error("Lỗi khi call API:", error);
       throw error;

@@ -1,6 +1,7 @@
 import {
   DeleteProductResponseModel,
   ProductDetailResponseModel,
+  UpdateProductVariantAdminResponseModel,
 } from "../models/admin.response";
 
 export interface Variant {
@@ -23,6 +24,12 @@ export interface ProductDetailEntity {
 }
 
 export interface DeleteProductEntity {
+  success: boolean;
+  message: string;
+  type: string;
+}
+
+export interface UpdateProductVariantAdminEntity {
   success: boolean;
   message: string;
   type: string;
@@ -53,5 +60,15 @@ export const convertToDeleteProductEntity = (
     success: responseModel.success,
     message: responseModel.message,
     type: responseModel.type,
+  };
+};
+
+export const convertToUpdateProductVariantAdminEntity = (
+  responseModel: UpdateProductVariantAdminResponseModel,
+): UpdateProductVariantAdminEntity => {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
+    type: responseModel.newType,
   };
 };

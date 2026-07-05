@@ -7,4 +7,30 @@ export const AdminUsecase = {
   deleteProductAdmin: ({ VariantID }: { VariantID: number }) => {
     return AdminService.deleteProductAdmin({ VariantID });
   },
+  updateProductVariantAdmin: ({
+    VariantID,
+    ProductID,
+    Color,
+    Stock,
+    Price,
+    ProductType,
+    SubType,
+  }: {
+    VariantID: number;
+    ProductID: number;
+    Color: string;
+    Stock: number;
+    Price: number;
+    ProductType: string;
+    SubType: string;
+  }) =>
+    AdminService.updateProductVariantAdmin({
+      VariantID,
+      ProductID,
+      Color,
+      Stock,
+      Price,
+      ProductType,
+      SubType,
+    }),
 };

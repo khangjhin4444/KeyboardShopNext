@@ -16,12 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ProductDetailEntity } from "@/features/products/entities/product.entity";
 import { useEffect, useState } from "react";
-import { div } from "motion/react-client";
 import { LoaderCircle } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminUsecase } from "@/features/admin/usecase/admin.usecase";
+import { toast } from "sonner";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -37,6 +36,15 @@ const defaultVal = {
   Keycap: "Cherry",
   Switch: "Clicky",
 };
+type TableProduct = {
+  ProductID: number;
+  VariantID: number;
+  Price: number;
+  Stock: number;
+  Color: string;
+  ProductType: string;
+  SubType: string;
+};
 
 export function DataTable<TData, TValue>({
   columns,
@@ -46,8 +54,9 @@ export function DataTable<TData, TValue>({
   isFetchingNextPage,
 }: DataTableProps<TData, TValue>) {
   const [editingRow, setEditingRow] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<ProductDetailEntity>>({});
+  const [editData, setEditData] = useState<Partial<TableProduct>>({});
   const queryClient = useQueryClient();
+  const [oldProductType, setOldProductType] = useState<string | null>(null);
   const deleteMutation = useMutation({
     mutationFn: async (VariantID: number) =>
       AdminUsecase.deleteProductAdmin({ VariantID: VariantID }),
@@ -62,6 +71,17 @@ export function DataTable<TData, TValue>({
       console.error("Xóa thất bại:", error);
     },
   });
+  const updateMutation = useMutation({
+    mutationFn: async (payload: {
+      VariantID: number;
+      ProductID: number;
+      Price: number;
+      Stock: number;
+      Color: string;
+      ProductType: string;
+      SubType: string;
+    }) => AdminUsecase.updateProductVariantAdmin(payload),
+  });
 
   const table = useReactTable({
     data,
@@ -72,9 +92,10 @@ export function DataTable<TData, TValue>({
     meta: {
       editingRow,
       editData,
-      startEdit: (rowId: string, rowData: ProductDetailEntity) => {
+      startEdit: (rowId: string, rowData: TableProduct) => {
         setEditingRow(rowId);
         setEditData(rowData);
+        setOldProductType(rowData.ProductType);
       },
       updateEditData: (columnId: string, value: string) => {
         if (columnId === "ProductType") {
@@ -87,18 +108,40 @@ export function DataTable<TData, TValue>({
       },
       cancelEdit: () => {
         setEditingRow(null);
+        setOldProductType(null);
         setEditData({});
       },
       saveRow: async (rowId: string) => {
         try {
-          console.log("Đang gửi API với dữ liệu:", editData);
-          // GỌI API PUT/PATCH CỦA BẠN Ở ĐÂY
-          // await updateProductVariant(editData.VariantID, editData);
-
-          // Sau khi lưu thành công, đóng chế độ edit
-          setEditingRow(null);
-          setEditData({});
-          // Đừng quên gọi invalidateQueries để load lại bảng nhé
+          const payload = {
+            VariantID: Number(editData.VariantID),
+            ProductID: Number(editData.ProductID),
+            Price: Number(editData.Price),
+            Stock: Number(editData.Stock),
+            Color: editData.Color || "",
+            ProductType: editData.ProductType || "",
+            SubType: editData.SubType || "",
+          };
+          const updatePromise = updateMutation.mutateAsync(payload, {
+            onSuccess: (data) => {
+              queryClient.invalidateQueries({
+                queryKey: ["products-table", data.type],
+              });
+              if (oldProductType && oldProductType !== data.type) {
+                queryClient.invalidateQueries({
+                  queryKey: ["products-table", oldProductType],
+                });
+              }
+              setEditingRow(null);
+              setOldProductType(null);
+              setEditData({});
+            },
+          });
+          toast.promise(updatePromise, {
+            loading: "Saving...",
+            success: "Update successful",
+            error: "Update failed!",
+          });
         } catch (error) {
           console.error("Lỗi khi lưu:", error);
         }
@@ -106,7 +149,12 @@ export function DataTable<TData, TValue>({
       deleteRow: async (variantId: string) => {
         try {
           console.log("Đang gửi API xóa với VariantID:", variantId);
-          deleteMutation.mutate(Number(variantId));
+          const deleteMutaion = deleteMutation.mutateAsync(Number(variantId));
+          toast.promise(deleteMutaion, {
+            loading: "Deleting...",
+            success: "Delete successful",
+            error: "Delete failed!",
+          });
         } catch (error) {
           console.error("Lỗi khi xóa:", error);
         }
