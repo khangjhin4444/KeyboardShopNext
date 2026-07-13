@@ -1,13 +1,16 @@
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
+  AddProductEntity,
+  convertToAddProductEntity,
   convertToDeleteProductEntity,
   convertToUpdateProductVariantAdminEntity,
+  DeleteProductEntity,
   ProductDetailEntity,
   UpdateProductVariantAdminEntity,
 } from "../entities/admin.entity";
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 import { convertToProductDetailEntity } from "../entities/admin.entity";
-import { DeleteProductResponseModel } from "../models/admin.response";
+import { AddProductResponseModel } from "../models/admin.response";
 
 type GetProductDetail = ({
   type,
@@ -21,7 +24,24 @@ type DeleteProductAdmin = ({
   VariantID,
 }: {
   VariantID: number;
-}) => Promise<DeleteProductResponseModel>;
+}) => Promise<DeleteProductEntity>;
+
+type PayloadVariant = {
+  color: string;
+  stock: number;
+  price: number;
+  main_image: string;
+};
+
+export type AddProductProps = {
+  name: string;
+  description: string;
+  productType: string;
+  subType: string;
+  variants: PayloadVariant[];
+  extraImages: string[];
+};
+type AddProductAdmin = (payload: AddProductProps) => Promise<AddProductEntity>;
 
 type UpdateProductVariantAdmin = ({
   VariantID,
@@ -45,6 +65,7 @@ type AdminServiceType = {
   getProductDetail: GetProductDetail;
   deleteProductAdmin: DeleteProductAdmin;
   updateProductVariantAdmin: UpdateProductVariantAdmin;
+  addProduct: AddProductAdmin;
 };
 
 export const AdminService: AdminServiceType = {
@@ -118,6 +139,21 @@ export const AdminService: AdminServiceType = {
         },
       );
       return convertToUpdateProductVariantAdminEntity(result);
+    } catch (error) {
+      console.error("Lỗi khi call API:", error);
+      throw error;
+    }
+  },
+  addProduct: async function (payload) {
+    try {
+      const result = await fetchWithAuth(`${API_URL}/api/products/admin/new`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      return convertToAddProductEntity(result);
     } catch (error) {
       console.error("Lỗi khi call API:", error);
       throw error;

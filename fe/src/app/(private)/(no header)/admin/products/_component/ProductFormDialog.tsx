@@ -23,43 +23,29 @@ import { Plus, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUploader } from "./ImageUploader";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-
-export type Variant = {
-  id?: string;
-  color: string;
-  price: number;
-  stock: number;
-  main_image: string | null;
-};
-
-export type ExtraImage = {
-  id?: string;
-  image_url: string;
-  sort_order: number;
-};
-
-export type ProductWithRelations = {
-  id: string;
-  name: string;
-  description: string;
-  type: string;
-  subtype: string;
-  product_variants: Variant[];
-  product_images: ExtraImage[];
-};
+import { AdminUsecase } from "@/features/admin/usecase/admin.usecase";
 
 const PRODUCT_TYPES: { value: string; label: string }[] = [
   { value: "KeyboardKit", label: "Keyboard Kit" },
   { value: "Prebuild", label: "Prebuild" },
-  { value: "keycap", label: "Keycap" },
-  { value: "switch", label: "Switch" },
+  { value: "Keycap", label: "Keycap" },
+  { value: "Switch", label: "Switch" },
 ];
 
 const SUBTYPES: Record<string, string[]> = {
   KeyboardKit: ["60%", "65%", "75%", "TKL", "Full Size"],
   Prebuild: ["60%", "65%", "75%", "TKL", "Full Size"],
-  keycap: ["Cherry", "MDA", "SA", "Artisan"],
-  switch: ["Linear", "Tactile", "Clicky", "Silent"],
+  Keycap: ["Cherry", "MDA", "SA", "Artisan"],
+  Switch: ["Linear", "Tactile", "Clicky", "Silent"],
+};
+
+export type Variant = {
+  id: number;
+  color: string;
+  price: number;
+  stock: number;
+  file: File | null;
+  url: string;
 };
 
 export function ProductFormDialog({
@@ -77,13 +63,14 @@ export function ProductFormDialog({
   const [subtype, setSubtype] = useState<string>("75%");
   const [extraImages, setExtraImages] = useState<File[]>([]);
 
-  const [variants, setVariants] = useState([
+  const [variants, setVariants] = useState<Variant[]>([
     {
       id: Date.now(),
       color: "",
       price: 0,
       stock: 0,
       file: null,
+      url: "",
     },
   ]);
   const handleAddVariant = () => {
@@ -95,6 +82,7 @@ export function ProductFormDialog({
         price: 0,
         stock: 0,
         file: null,
+        url: "",
       },
     ]);
     setExtraImages([]);
@@ -113,6 +101,7 @@ export function ProductFormDialog({
         price: 0,
         stock: 0,
         file: null,
+        url: "",
       },
     ]);
     setExtraImages([]);
@@ -124,15 +113,7 @@ export function ProductFormDialog({
   const singleVariant = variants.length === 1;
   const saveMutation = useMutation({
     mutationFn: async () => handleSave(),
-    onSuccess: ({
-      mainImageURLs,
-      extraImageURLs,
-    }: {
-      mainImageURLs: (string | null)[];
-      extraImageURLs: string[];
-    }) => {
-      console.log("Main image URLs:", mainImageURLs);
-      console.log("Extra image URLs:", extraImageURLs);
+    onSuccess: () => {
       onOpenChange(false);
       onSaved(type);
       toast.success("Product saved successfully!");
@@ -149,8 +130,13 @@ export function ProductFormDialog({
       toast.error("Please fill in all required fields.");
       throw new Error("Validation failed");
     }
-    console.log("Saving variants:", variants);
-    console.log("Saving images:", extraImages);
+    const colors = variants.map((v) => v.color.trim().toLowerCase());
+    const uniqueColors = new Set(colors);
+    const isUnique = uniqueColors.size === variants.length;
+    if (!isUnique) {
+      toast.error("Variant colors must be unique.");
+      throw new Error("Validation failed: duplicate colors");
+    }
     const uploadToImgBB = async (fileToUpload: File): Promise<string> => {
       const formData = new FormData();
       formData.append("image", fileToUpload);
@@ -191,7 +177,28 @@ export function ProductFormDialog({
         }),
       );
     }
-    return { mainImageURLs, extraImageURLs };
+    const updatedVariants = variants.map((v, i) => ({
+      ...v,
+      url: mainImageURLs[i]!,
+    }));
+    setVariants(updatedVariants);
+    const finalVariants = variants.map((v, i) => ({
+      color: v.color,
+      price: v.price,
+      stock: v.stock,
+      main_image: mainImageURLs[i]!,
+    }));
+    console.log(finalVariants);
+
+    const payload = {
+      name: name,
+      description: description,
+      productType: type,
+      subType: subtype,
+      variants: finalVariants,
+      extraImages: extraImageURLs,
+    };
+    AdminUsecase.addProduct(payload);
   };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

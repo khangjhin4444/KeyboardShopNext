@@ -1,4 +1,5 @@
 import {
+  AddProductResponseModel,
   DeleteProductResponseModel,
   ProductDetailResponseModel,
   UpdateProductVariantAdminResponseModel,
@@ -33,6 +34,11 @@ export interface UpdateProductVariantAdminEntity {
   success: boolean;
   message: string;
   type: string;
+}
+
+export interface AddProductEntity {
+  success: boolean;
+  message: string;
 }
 
 export const convertToProductDetailEntity = (
@@ -70,5 +76,14 @@ export const convertToUpdateProductVariantAdminEntity = (
     success: responseModel.success,
     message: responseModel.message,
     type: responseModel.newType,
+  };
+};
+
+export const convertToAddProductEntity = (
+  responseModel: AddProductResponseModel,
+): AddProductEntity => {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
   };
 };

@@ -1,4 +1,4 @@
-import { AdminService } from "../services/admin.service";
+import { AddProductProps, AdminService } from "../services/admin.service";
 
 export const AdminUsecase = {
   getProductDetail: ({ page, type }: { page: number; type: string }) => {
@@ -33,4 +33,7 @@ export const AdminUsecase = {
       ProductType,
       SubType,
     }),
+  addProduct: (payload: AddProductProps) => {
+    return AdminService.addProduct(payload);
+  },
 };

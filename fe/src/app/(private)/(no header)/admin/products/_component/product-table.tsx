@@ -133,9 +133,10 @@ export default function ProductTable({ type }: { type: string }) {
       <ProductFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onSaved={(type: string) =>
-          qc.invalidateQueries({ queryKey: ["products-table", type] })
-        }
+        onSaved={(type: string) => {
+          console.log(type);
+          qc.invalidateQueries({ queryKey: ["products-table", type] });
+        }}
       />
     </div>
   );

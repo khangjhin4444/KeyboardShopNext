@@ -37,3 +37,8 @@ export interface UpdateProductVariantAdminResponseModel {
   message: string;
   newType: string;
 }
+
+export interface AddProductResponseModel {
+  success: boolean;
+  message: string;
+}
