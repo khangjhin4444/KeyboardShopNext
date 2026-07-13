@@ -7,7 +7,6 @@ const userRouter = require("./src/routes/user.route");
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const { neon } = require("@neondatabase/serverless");
 
 const app = express();
 const PORT = process.env.PORT || 5000;

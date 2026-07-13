@@ -13,7 +13,7 @@ router.get(
   verifyAdmin,
   productController.getProductsAdmin,
 );
-router.get("/:id", verifyToken, verifyAdmin, productController.getProductByID);
+router.get("/:id", verifyToken, productController.getProductByID);
 router.delete(
   "/admin/:id",
   verifyToken,

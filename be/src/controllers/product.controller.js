@@ -280,6 +280,9 @@ const updateProductVariantAdmin = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Error when update" });
+  } finally {
+    // QUAN TRỌNG: Phải trả kết nối lại cho Pool, nếu không Server sẽ bị treo sau vài lần gọi
+    client.release();
   }
 };
 
