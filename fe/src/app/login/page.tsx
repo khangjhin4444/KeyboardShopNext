@@ -33,11 +33,9 @@ export default function AuthPage() {
         credentials: "include",
       });
       const data = await res.json();
-      console.log(data);
       if (data.success) {
         localStorage.setItem("accessToken", data.accessToken);
         loginAction(data.user);
-        console.log("Login", data.user);
         if (data.role === "admin") {
           router.push("/admin/dashboard");
         } else {

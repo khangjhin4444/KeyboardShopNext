@@ -61,8 +61,6 @@ export function DataTable<TData, TValue>({
     mutationFn: async (VariantID: number) =>
       AdminUsecase.deleteProductAdmin({ VariantID: VariantID }),
     onSuccess: (data) => {
-      console.log("Xóa thành công!", data);
-      // Tự động load lại bảng sau khi xóa để dữ liệu biến mất
       queryClient.invalidateQueries({
         queryKey: ["products-table", data.type],
       });
@@ -148,7 +146,6 @@ export function DataTable<TData, TValue>({
       },
       deleteRow: async (variantId: string) => {
         try {
-          console.log("Đang gửi API xóa với VariantID:", variantId);
           const deleteMutaion = deleteMutation.mutateAsync(Number(variantId));
           toast.promise(deleteMutaion, {
             loading: "Deleting...",

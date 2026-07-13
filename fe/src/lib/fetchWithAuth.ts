@@ -44,7 +44,6 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   if (!response.ok) {
     // throw new Error("Lấy dữ liệu thất bại");
     const res = await response.json();
-    console.log(res);
   }
 
   return response.json();

@@ -95,7 +95,6 @@ export const AdminService: AdminServiceType = {
           method: "DELETE",
         },
       );
-      console.log(result);
       return convertToDeleteProductEntity(result);
     } catch (error) {
       console.error("Lỗi khi call API:", error);

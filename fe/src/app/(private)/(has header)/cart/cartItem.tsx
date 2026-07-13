@@ -30,15 +30,12 @@ export default function CartItem({
       return CartUsecase.deleteCartItem(payload);
     },
     onSuccess: (res) => {
-      console.log("Xóa thành công! Bắt đầu làm mới dữ liệu...");
       setQuantity(0);
       queryClient.invalidateQueries({ queryKey: ["cart-items"] });
     },
   });
   const handleUpdateCartAPI = async (newQuantity: number) => {
     try {
-      console.log("Đang gọi API cập nhật giỏ hàng với số lượng:", newQuantity);
-      // Gọi mutation hoặc fetch axios ở đây
       await changeItemQuantityMutation
         .mutateAsync({
           VariantID: item.VariantID,

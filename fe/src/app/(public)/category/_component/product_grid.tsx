@@ -61,7 +61,6 @@ export default function ProductGrid({
     },
     enabled: inView,
   });
-  console.log(data);
   const handleSortChange = (sortOpt: string) => {
     setSort(sortOpt);
   };

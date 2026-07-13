@@ -47,7 +47,6 @@ export default function CartPage() {
     (sum, val) => sum + val,
     0,
   );
-  console.log(subTotals);
   const handleUpdateSubTotal = (VariantId: number, TotalAmount: number) => {
     setSubTotals((prev) => ({
       ...prev,
