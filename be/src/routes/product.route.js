@@ -28,4 +28,11 @@ router.put(
   productController.updateProductVariantAdmin,
 );
 
+router.post(
+  "/admin/new",
+  verifyToken,
+  verifyAdmin,
+  productController.addProductAdmin,
+);
+
 module.exports = router;

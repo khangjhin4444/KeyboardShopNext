@@ -286,6 +286,63 @@ const updateProductVariantAdmin = async (req, res) => {
   }
 };
 
+const addProductAdmin = async (req, res) => {
+  const { name, description, productType, subType, variants, extraImages } =
+    req.body;
+  console.log(name, description, productType, subType, variants, extraImages);
+  if (
+    !name ||
+    !description ||
+    !productType ||
+    !subType ||
+    !variants ||
+    variants.some((v) => !v.color || v.price <= 0 || v.stock < 0)
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid product information" });
+  }
+  const colors = variants.map((v) => v.color.trim().toLowerCase());
+  const uniqueColors = new Set(colors);
+  const isUnique = uniqueColors.size === variants.length;
+  if (!isUnique) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Variant colors must be unique." });
+  }
+  try {
+    const result = await sql`
+            INSERT INTO "product" ("Name", "Description", "ProductType", "SubType")
+            VALUES (${name}, ${description}, ${productType}, ${subType})
+            RETURNING "ProductID"
+          `;
+    const newProductID = result[0].ProductID;
+    const insertQueries = variants.map(
+      (v) => sql`
+            INSERT INTO "product_variants" ("ProductID", "Color", "Price", "Stock", "MainImage")
+            VALUES (${newProductID}, ${v.color}, ${v.price}, ${v.stock}, ${v.main_image})
+          `,
+    );
+
+    await sql.transaction(insertQueries);
+    if (extraImages) {
+      const insertQueries = extraImages.map(
+        (image) => sql`
+          INSERT INTO "product_images" ("ProductID", "ImageUrl")
+          VALUES (${newProductID}, ${image})
+        `,
+      );
+      await sql.transaction(insertQueries);
+    }
+    res.status(200).json({
+      success: true,
+      message: "Add Product success",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   getProductByID,
   getProducts,
@@ -293,4 +350,5 @@ module.exports = {
   deleteProductAdmin,
   getProductsAdmin,
   updateProductVariantAdmin,
+  addProductAdmin,
 };
