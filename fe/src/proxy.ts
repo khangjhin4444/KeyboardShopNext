@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get("refreshToken")?.value;
   const role = request.cookies.get("role")?.value;
   const { pathname } = request.nextUrl;
-  console.log(refreshToken);
+  console.log("proxy", refreshToken);
   const isPrivatePage =
     pathname.startsWith("/product") ||
     pathname.startsWith("/cart") ||
