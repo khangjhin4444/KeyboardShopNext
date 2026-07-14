@@ -11,17 +11,17 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
 app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://keyboard-shop-next-henna.vercel.app/",
+      "https://keyboard-shop-next-henna.vercel.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
 );
+app.use(express.json());
 
 app.use(cookieParser());
 app.use("/api/auth", authRouter);
