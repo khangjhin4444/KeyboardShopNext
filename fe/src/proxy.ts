@@ -26,6 +26,7 @@ export function proxy(request: NextRequest) {
     }
   }
   if (isAdminPage) {
+    console.log(refreshToken);
     if (!refreshToken) {
       // Chưa đăng nhập -> Đá về Login
       return NextResponse.redirect(new URL("/login", request.url));
