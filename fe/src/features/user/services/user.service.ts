@@ -3,8 +3,7 @@ import {
   convertToUserChangeInformationEntity,
   UserChangeInformationResponseEntity,
 } from "../entities/user.entity";
-import { p } from "motion/react-client";
-
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 type UserChangeInformation = ({
   address,
   name,
@@ -22,7 +21,7 @@ type UserService = {
 export const UserService: UserService = {
   userChangeInformation: async function ({ address, name, phone }) {
     try {
-      const response = await fetchWithAuth("http://localhost:8000/api/user", {
+      const response = await fetchWithAuth(`${API_URL}/api/user`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

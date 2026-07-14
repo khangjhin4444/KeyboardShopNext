@@ -5,8 +5,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useUserStore } from "@/store/userStore";
-import { Metadata } from "next";
-
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 export default function AuthPage() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true); // Toggle giữa Login và Signup
@@ -26,7 +25,7 @@ export default function AuthPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/login", {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -56,7 +55,7 @@ export default function AuthPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch("http://localhost:8000/api/auth/register", {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, fullName }), // Bổ sung các field cần thiết

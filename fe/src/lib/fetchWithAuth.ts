@@ -1,5 +1,4 @@
-// file: src/lib/fetchWithAuth.ts
-
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   let accessToken = localStorage.getItem("accessToken");
 
@@ -16,7 +15,7 @@ export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   // Nếu bị lỗi 401 (Hết hạn Access Token)
   if (response.status === 401) {
     console.log("Token hết hạn, tự động refresh...");
-    const refreshRes = await fetch("http://localhost:8000/api/auth/refresh", {
+    const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
       method: "POST",
       credentials: "include", // Ép gửi kèm Cookie chứa Refresh Token
     });

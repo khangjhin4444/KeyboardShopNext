@@ -12,7 +12,7 @@ import {
   DeleteCartItemResponseEntity,
   PlaceOrderResponseEntity,
 } from "../entities/cart.entity";
-
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 type AddToCart = ({
   VariantID,
   Quantity,
@@ -69,7 +69,7 @@ export const CartService: CartService = {
     VariantID: number;
     Quantity: number;
   }) {
-    const response = await fetchWithAuth("http://localhost:8000/api/cart/add", {
+    const response = await fetchWithAuth(`${API_URL}/api/cart/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json", // BẮT BUỘC phải có khi POST JSON
@@ -79,7 +79,7 @@ export const CartService: CartService = {
     return convertToAddToCartResponseEntity(response);
   },
   getCartItems: async function () {
-    const response = await fetchWithAuth("http://localhost:8000/api/cart");
+    const response = await fetchWithAuth(`${API_URL}/api/cart`);
     return convertToCartItemEntity(response);
   },
   changeQuantity: async function ({
@@ -89,29 +89,23 @@ export const CartService: CartService = {
     VariantID: number;
     Quantity: number;
   }) {
-    const response = await fetchWithAuth(
-      "http://localhost:8000/api/cart/change",
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ VariantID, Quantity }),
+    const response = await fetchWithAuth(`${API_URL}/api/cart/change`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ VariantID, Quantity }),
+    });
     return convertToChangeItemQuantityResponseEntity(response);
   },
   deleteCartItem: async function ({ VariantID }: { VariantID: number }) {
-    const response = await fetchWithAuth(
-      "http://localhost:8000/api/cart/delete",
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ VariantID }),
+    const response = await fetchWithAuth(`${API_URL}/api/cart/delete`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ VariantID }),
+    });
     return convertToDeleteCartItemResponseEntity(response);
   },
   placeOrder: async function ({
@@ -129,23 +123,20 @@ export const CartService: CartService = {
     payment: string;
     total: number;
   }) {
-    const response = await fetchWithAuth(
-      "http://localhost:8000/api/cart/checkout",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          phone,
-          address,
-          shipping,
-          payment,
-          total,
-        }),
+    const response = await fetchWithAuth(`${API_URL}/api/cart/checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        name,
+        phone,
+        address,
+        shipping,
+        payment,
+        total,
+      }),
+    });
 
     return convertToPlaceOrderResponseEntity(response);
   },

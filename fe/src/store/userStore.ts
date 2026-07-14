@@ -1,7 +1,9 @@
 import { string } from "zod";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-// Định nghĩa khung dữ liệu cho User
+
+const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
 interface UserState {
   user: {
     id: number;
@@ -32,7 +34,7 @@ export const useUserStore = create<UserState>()(
       // Hàm gọi khi bấm đăng xuất
       logout: async () => {
         try {
-          await fetch("http://localhost:8000/api/auth/logout", {
+          await fetch(`${API_URL}/api/auth/logout`, {
             method: "POST",
             // QUAN TRỌNG: Phải có dòng này thì trình duyệt mới gửi Cookie lên cho Backend xóa
             credentials: "include",
