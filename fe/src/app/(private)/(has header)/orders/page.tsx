@@ -2,10 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoaderCircle } from "lucide-react";
-import { OrderEntity } from "@/features/orders/entities/order.entity";
 import { OrderUsecase } from "@/features/orders/usecase/order.usecase";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Order from "./_component/order";
+import { OrderEntity } from "@/shared/entities/orders.entity";
 
 export default function OrdersPage() {
   // 1. Lấy dữ liệu đơn hàng

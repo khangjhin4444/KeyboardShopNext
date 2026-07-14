@@ -1,4 +1,4 @@
-import { OrderEntity } from "../entities/order.entity";
+import { OrderEntity } from "@/shared/entities/orders.entity";
 
 export interface OrdersResponseModel {
   success: boolean;

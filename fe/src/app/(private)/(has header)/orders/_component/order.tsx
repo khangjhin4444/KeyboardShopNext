@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { OrderEntity } from "@/features/orders/entities/order.entity";
 import { OrderUsecase } from "@/features/orders/usecase/order.usecase";
+import { OrderEntity } from "@/shared/entities/orders.entity";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clsx } from "clsx";
 import { toast } from "sonner";
