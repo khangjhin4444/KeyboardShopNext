@@ -1,6 +1,12 @@
 import {
+  CancelOrderResponseEntity,
+  OrdersResponseEntity,
+} from "@/shared/entities/orders.entity";
+import {
   AddProductResponseModel,
+  CancelOrderResponseModel,
   DeleteProductResponseModel,
+  OrdersResponseModel,
   ProductDetailResponseModel,
   UpdateProductVariantAdminResponseModel,
 } from "../models/admin.response";
@@ -39,6 +45,23 @@ export interface UpdateProductVariantAdminEntity {
 export interface AddProductEntity {
   success: boolean;
   message: string;
+}
+
+export function convertToOrdersResponseEntity(
+  responeModel: OrdersResponseModel,
+): OrdersResponseEntity {
+  return {
+    orders: responeModel.data,
+    length: responeModel.length,
+  };
+}
+export function convertToCancelOrderResponseEntity(
+  responseModel: CancelOrderResponseModel,
+): CancelOrderResponseEntity {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
+  };
 }
 
 export const convertToProductDetailEntity = (

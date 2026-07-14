@@ -1,5 +1,5 @@
 "use client";
-import { LayoutDashboard, Package, Keyboard } from "lucide-react";
+import { LayoutDashboard, Package, ReceiptText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ import Image from "next/image";
 const items = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Products", url: "/admin/products", icon: Package },
+  { title: "Orders", url: "/admin/orders", icon: ReceiptText },
 ];
 
 export function AdminSidebar() {

@@ -1,10 +1,12 @@
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
-  CancelOrderResponseEntity,
   convertToCancelOrderResponseEntity,
   convertToOrdersResponseEntity,
-  OrdersResponseEntity,
 } from "../entities/order.entity";
+import {
+  CancelOrderResponseEntity,
+  OrdersResponseEntity,
+} from "@/shared/entities/orders.entity";
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 type GetOrders = (status: string) => Promise<OrdersResponseEntity>;
 type CancleOrder = ({

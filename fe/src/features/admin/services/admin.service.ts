@@ -2,7 +2,9 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   AddProductEntity,
   convertToAddProductEntity,
+  convertToCancelOrderResponseEntity,
   convertToDeleteProductEntity,
+  convertToOrdersResponseEntity,
   convertToUpdateProductVariantAdminEntity,
   DeleteProductEntity,
   ProductDetailEntity,
@@ -10,7 +12,10 @@ import {
 } from "../entities/admin.entity";
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 import { convertToProductDetailEntity } from "../entities/admin.entity";
-import { AddProductResponseModel } from "../models/admin.response";
+import {
+  CancelOrderResponseEntity,
+  OrdersResponseEntity,
+} from "@/shared/entities/orders.entity";
 
 type GetProductDetail = ({
   type,
@@ -61,11 +66,17 @@ type UpdateProductVariantAdmin = ({
   SubType: string;
 }) => Promise<UpdateProductVariantAdminEntity>;
 
+type GetAdminOrders = (status: string) => Promise<OrdersResponseEntity>;
+
+type CancelAdminOrder = (orderID: number) => Promise<CancelOrderResponseEntity>;
+
 type AdminServiceType = {
   getProductDetail: GetProductDetail;
   deleteProductAdmin: DeleteProductAdmin;
   updateProductVariantAdmin: UpdateProductVariantAdmin;
   addProduct: AddProductAdmin;
+  getAdminOrders: GetAdminOrders;
+  cancelAdminOrder: CancelAdminOrder;
 };
 
 export const AdminService: AdminServiceType = {
@@ -155,6 +166,37 @@ export const AdminService: AdminServiceType = {
       return convertToAddProductEntity(result);
     } catch (error) {
       console.error("Lỗi khi call API:", error);
+      throw error;
+    }
+  },
+  getAdminOrders: async function (status: string) {
+    try {
+      const response = await fetchWithAuth(
+        `${API_URL}/api/orders/admin?status=${status}`,
+      );
+      return convertToOrdersResponseEntity(response);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
+  cancelAdminOrder: async function (orderID: number) {
+    try {
+      const response = await fetchWithAuth(
+        `${API_URL}/api/orders/admin/cancel`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderID,
+          }),
+        },
+      );
+      return convertToCancelOrderResponseEntity(response);
+    } catch (error) {
+      console.log(error);
       throw error;
     }
   },

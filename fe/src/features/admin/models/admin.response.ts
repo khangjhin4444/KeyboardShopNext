@@ -1,3 +1,5 @@
+import { OrderEntity } from "@/shared/entities/orders.entity";
+
 export interface ProductResponseModel {
   ProductID: number;
   Name: string;
@@ -39,6 +41,17 @@ export interface UpdateProductVariantAdminResponseModel {
 }
 
 export interface AddProductResponseModel {
+  success: boolean;
+  message: string;
+}
+
+export interface OrdersResponseModel {
+  success: boolean;
+  length: number;
+  data: OrderEntity[];
+}
+
+export interface CancelOrderResponseModel {
   success: boolean;
   message: string;
 }

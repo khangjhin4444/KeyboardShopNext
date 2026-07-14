@@ -36,4 +36,10 @@ export const AdminUsecase = {
   addProduct: (payload: AddProductProps) => {
     return AdminService.addProduct(payload);
   },
+  getAdminOrders: (status: string) => {
+    return AdminService.getAdminOrders(status);
+  },
+  cancelAdminOrder: (orderID: number) => {
+    return AdminService.cancelAdminOrder(orderID);
+  },
 };
