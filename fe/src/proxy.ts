@@ -19,7 +19,7 @@ export function proxy(request: NextRequest) {
   if (pathname === "/login" && refreshToken) {
     if (role === "admin") {
       // Nếu là Admin -> Cho thẳng vào Admin Dashboard
-      return NextResponse.redirect(new URL("/admin", request.url));
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     } else {
       // Nếu là Khách -> Cho về Home mua sắm
       return NextResponse.redirect(new URL("/home", request.url));

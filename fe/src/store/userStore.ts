@@ -34,7 +34,7 @@ export const useUserStore = create<UserState>()(
       // Hàm gọi khi bấm đăng xuất
       logout: async () => {
         try {
-          await fetch(`${API_URL}/api/auth/logout`, {
+          await fetch(`/api/auth/logout`, {
             method: "POST",
             // QUAN TRỌNG: Phải có dòng này thì trình duyệt mới gửi Cookie lên cho Backend xóa
             credentials: "include",
