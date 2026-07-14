@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get("refreshToken")?.value;
   const role = request.cookies.get("role")?.value;
   const { pathname } = request.nextUrl;
-
+  console.log(refreshToken);
   const isPrivatePage =
     pathname.startsWith("/product") ||
     pathname.startsWith("/cart") ||
@@ -26,7 +26,6 @@ export function proxy(request: NextRequest) {
     }
   }
   if (isAdminPage) {
-    console.log(refreshToken);
     if (!refreshToken) {
       // Chưa đăng nhập -> Đá về Login
       return NextResponse.redirect(new URL("/login", request.url));
