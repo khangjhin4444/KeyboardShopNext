@@ -8,7 +8,7 @@ import {
   QueryCache,
   MutationCache,
 } from "@tanstack/react-query";
-import { useUserStore } from "@/store/userStore";
+import { signOut } from "next-auth/react";
 
 export default function QueryProvider({
   children,
@@ -16,9 +16,6 @@ export default function QueryProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-
-  // Móc trực tiếp hàm logout từ Zustand ra đây
-  const logout = useUserStore((state) => state.logout);
 
   // Khởi tạo QueryClient 1 lần duy nhất bằng useState
   const [queryClient] = useState(
@@ -28,8 +25,7 @@ export default function QueryProvider({
         queryCache: new QueryCache({
           onError: (error) => {
             if (error.message === "SESSION_EXPIRED") {
-              logout(); // Zustand tự động xoá isAuth và clear localStorage
-              router.push("/login"); // Đá về trang đăng nhập ngay lập tức
+              signOut({ callbackUrl: "/login" });
             }
           },
         }),
@@ -38,8 +34,7 @@ export default function QueryProvider({
         mutationCache: new MutationCache({
           onError: (error) => {
             if (error.message === "SESSION_EXPIRED") {
-              logout();
-              router.push("/login");
+              signOut({ callbackUrl: "/login" });
             }
           },
         }),

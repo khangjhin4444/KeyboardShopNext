@@ -5,20 +5,16 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useUserStore } from "@/store/userStore";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
 import { CartItemEntity } from "@/features/cart/entities/cart.entity";
-import { p } from "motion/react-client";
-// Import OrderUsecase nếu bạn đã tạo hàm gọi API đặt hàng
-// import { OrderUsecase } from "@/features/orders/usecase/order.usecase";
 
+import { useSession } from "next-auth/react";
 export default function Page() {
-  const updateCartQuantity = useUserStore((state) => state.updateCartQuantity);
+  const { data: session, update } = useSession();
   const router = useRouter();
   const formatter = new Intl.NumberFormat("vi-VN");
 
-  // Lấy thông tin user từ Zustand store (đã đăng nhập)
-  const user = useUserStore((state) => state.user);
+  const user = session?.user;
 
   // Gọi API lấy giỏ hàng
   const { data, isLoading, isError } = useQuery({
@@ -83,8 +79,10 @@ export default function Page() {
     }) => {
       return CartUsecase.placeOrder(payload); // Trả kết quả về cho onSuccess xử lý
     },
-    onSuccess: () => {
-      updateCartQuantity(0);
+    onSuccess: async () => {
+      await update({
+        cartQuantity: 0,
+      });
     },
   });
 

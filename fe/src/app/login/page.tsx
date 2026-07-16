@@ -1,11 +1,9 @@
-// file: src/app/(public)/login/page.tsx
 "use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import { useUserStore } from "@/store/userStore";
-const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
+import { signIn } from "next-auth/react";
 export default function AuthPage() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true); // Toggle giữa Login và Signup
@@ -17,39 +15,31 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
 
-  const loginAction = useUserStore((state) => state.login);
-
-  // Xử lý Gửi Form Đăng Nhập
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
     try {
-      const res = await fetch(`/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-        credentials: "include",
+      // Gọi qua NextAuth
+      const res = await signIn("credentials", {
+        username,
+        password,
+        redirect: false, // Để tự xử lý routing thay vì NextAuth tự chuyển trang
       });
-      const data = await res.json();
-      if (data.success) {
-        localStorage.setItem("accessToken", data.accessToken);
-        loginAction(data.user);
-        if (data.role === "admin") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/home");
-        }
+
+      if (res?.error) {
+        console.log(res.error);
+        setErrorMsg(res.error); // Hiển thị lỗi từ backend
       } else {
-        setErrorMsg("Wrong username or password");
+        // Đăng nhập thành công, NextAuth đã tự lưu session cookie
+        router.push("/home"); // Tạm thời push về home, bạn có thể fetch session ở middleware để route theo role
+        router.refresh(); // Cập nhật lại state server
       }
     } catch (err) {
+      console.log(err);
       setErrorMsg("Lỗi kết nối đến máy chủ");
-      console.log("eer:", err);
     }
   };
-
-  // Xử lý Gửi Form Đăng Ký
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");

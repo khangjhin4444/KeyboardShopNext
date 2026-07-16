@@ -10,8 +10,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "@/store/userStore";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,18 +33,16 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import EditProfileForm from "./edit-profile-form";
+import { signOut, useSession } from "next-auth/react";
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuth, logout } = useUserStore();
+  const { data: session, status } = useSession();
+  const isAuth = !!session?.user;
+  const user = session?.user;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const [hasMounted, setHasMounted] = useState(false);
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-  if (!hasMounted) return null;
   return (
     <header className="w-full bg-[#8CC0EB] dark:bg-black flex flex-col justify-center pb-5 items-center">
       <h1 className="text-4xl mt-6 font-bold text-[#FFEBCC] dark:text-zinc-50">
@@ -53,7 +50,7 @@ export default function Header() {
       </h1>
       <div className="flex flex-row w-full justify-around items-center">
         <Image
-          className="object-contain rounded-[50%] "
+          className="object-contain rounded-[50%] cursor-pointer"
           src="/logo.png"
           alt="Logo"
           width={60}
@@ -118,8 +115,7 @@ export default function Header() {
                     <DropdownMenuItem
                       variant="destructive"
                       onClick={() => {
-                        logout();
-                        router.push("/login");
+                        signOut({ callbackUrl: "/login" });
                       }}
                     >
                       <LogOutIcon className="mr-2 h-4 w-4" />

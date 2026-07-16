@@ -2,7 +2,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
-import { useUserStore } from "@/store/userStore";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
 import { Button } from "./ui/button";
@@ -11,6 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserUsecase } from "@/features/user/usecase/user.usecase";
 import { p } from "motion/react-client";
+import { useSession } from "next-auth/react";
 
 const formSchema = z.object({
   address: z.string().min(5, "Address must be at least 5 characters."),
@@ -26,7 +26,9 @@ export default function EditProfileForm({
 }: {
   onSuccess: () => void;
 }) {
-  const { user, updateUserInformation } = useUserStore();
+  const { data: session, update } = useSession();
+  const user = session?.user;
+  console.log(user);
   // 1. KHÔNG CẦN DÙNG useState NỮA! Giao toàn quyền cho React Hook Form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,9 +43,14 @@ export default function EditProfileForm({
     mutationFn: async (payload: z.infer<typeof formSchema>) => {
       return UserUsecase.userChangeInformation(payload);
     },
-    onSuccess: (data, payload) => {
+    onSuccess: async (data, payload) => {
       toast.success(data.message);
-      updateUserInformation(payload.address, payload.name, payload.phone);
+
+      await update({
+        Name: payload.name,
+        Address: payload.address,
+        Phone: payload.phone,
+      });
       onSuccess();
     },
     onError: () => {

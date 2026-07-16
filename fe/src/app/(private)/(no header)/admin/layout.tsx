@@ -2,13 +2,10 @@
 import React from "react";
 import { AdminSidebar } from "./_component/sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/sonner";
-import { Button } from "@/components/ui/button";
 import { UserIcon } from "lucide-react";
-import { useUserStore } from "@/store/userStore";
+import { signOut } from "next-auth/react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { logout } = useUserStore();
   return (
     <SidebarProvider>
       <AdminSidebar />
@@ -18,7 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <h1 className="text-sm font-medium text-muted-foreground">Admin</h1>
           <div className="ml-auto">
             <button
-              onClick={() => logout()}
+              onClick={() => signOut({ callbackUrl: "/login" })}
               className="flex items-center gap-2 rounded-2xl p-2 border-2 cursor-pointer "
             >
               <span>Log out</span>

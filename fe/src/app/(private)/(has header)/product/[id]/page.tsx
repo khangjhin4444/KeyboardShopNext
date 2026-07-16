@@ -6,12 +6,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useUserStore } from "@/store/userStore";
 import Quantity from "@/components/quantity";
+import { useSession } from "next-auth/react";
 
 export default function Page() {
-  const updateCartQuantity = useUserStore((state) => state.updateCartQuantity);
-  let currentQuantity = useUserStore((state) => state.user?.cartQuantity || 0);
+  const { data: sessions, update } = useSession();
+  let currentQuantity = sessions?.user.cartQuantity;
   const params = useParams();
   const productID = parseInt(params.id as string, 10);
   const { data, isLoading, isError, isSuccess } = useQuery({
@@ -33,8 +33,8 @@ export default function Page() {
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
       return CartUsecase.addToCart(payload); // Trả kết quả về cho onSuccess xử lý
     },
-    onSuccess: () => {
-      updateCartQuantity(Number(currentQuantity) + Number(quantity));
+    onSuccess: async () => {
+      await update({ cartQuanity: Number(currentQuantity) + Number(quantity) });
     },
   });
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {

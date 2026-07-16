@@ -1,48 +1,29 @@
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
+import { getSession, signOut } from "next-auth/react";
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  let accessToken = localStorage.getItem("accessToken");
+  const session = await getSession();
 
-  // Lần gọi API đầu tiên
-  let response = await fetch(url, {
+  if (!session || !session.accessToken) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  if (session.error === "RefreshAccessTokenError") {
+    await signOut({ callbackUrl: "/login" });
+    throw new Error("SESSION_EXPIRED");
+  }
+  const response = await fetch(url, {
     ...options,
     headers: {
       ...options.headers,
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${session.accessToken}`,
     },
   });
 
-  // Nếu bị lỗi 401 (Hết hạn Access Token)
-  if (response.status === 401) {
-    console.log("Token hết hạn, tự động refresh...");
-    const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
-      method: "POST",
-      credentials: "include", // Ép gửi kèm Cookie chứa Refresh Token
-    });
-
-    if (refreshRes.ok) {
-      const { accessToken: newAccessToken } = await refreshRes.json();
-      localStorage.setItem("accessToken", newAccessToken);
-
-      // Tái thực hiện lại request ban đầu với Token mới
-      response = await fetch(url, {
-        ...options,
-        headers: {
-          ...options.headers,
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${newAccessToken}`,
-        },
-      });
-    } else {
-      // Nếu refresh cũng thất bại (quá 7 ngày), ném ra mã lỗi đặc biệt
-      throw new Error("SESSION_EXPIRED");
-    }
-  }
-
-  // Nếu lỗi khác (500, 404...)
   if (!response.ok) {
-    // throw new Error("Lấy dữ liệu thất bại");
-    const res = await response.json();
+    const errorData = await response.json().catch(() => ({}));
+    console.error("API Error:", errorData);
+    throw new Error(errorData.message || "Lấy dữ liệu thất bại");
   }
 
   return response.json();

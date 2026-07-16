@@ -1,12 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { CartItemEntity } from "@/features/cart/entities/cart.entity";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Quantity from "@/components/quantity";
-import { tr } from "motion/react-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
-import { useUserStore } from "@/store/userStore";
+import { useSession } from "next-auth/react";
 
 export default function CartItem({
   item,
@@ -15,13 +14,18 @@ export default function CartItem({
   item: CartItemEntity;
   onUpdateSubTotal: (VariantID: number, TotalAmount: number) => void;
 }) {
+  const { data: session, update } = useSession();
   const queryClient = useQueryClient();
   const formatter = new Intl.NumberFormat("vi-VN");
+
   const [quantity, setQuantity] = useState<number | string>(item.Quantity);
-  const updateCartQuantity = useUserStore((state) => state.updateCartQuantity);
+  const prevQuantity = useRef(item.Quantity);
+
+  const currentGlobalTotal = session?.user?.cartQuantity || 0;
+
   const changeItemQuantityMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
-      return CartUsecase.changeItemQuantity(payload); // Trả kết quả về cho onSuccess xử lý
+      return CartUsecase.changeItemQuantity(payload);
     },
   });
 
@@ -29,49 +33,62 @@ export default function CartItem({
     mutationFn: async (payload: { VariantID: number }) => {
       return CartUsecase.deleteCartItem(payload);
     },
-    onSuccess: (res) => {
-      setQuantity(0);
-      queryClient.invalidateQueries({ queryKey: ["cart-items"] });
-    },
   });
+
+  // --- HANDLERS ---
+
   const handleUpdateCartAPI = async (newQuantity: number) => {
     try {
-      await changeItemQuantityMutation
-        .mutateAsync({
-          VariantID: item.VariantID,
-          Quantity: newQuantity,
-        })
-        .then((res) => {
-          updateCartQuantity(res.newQuantity!);
-        });
+      await changeItemQuantityMutation.mutateAsync({
+        VariantID: item.VariantID,
+        Quantity: newQuantity,
+      });
+
+      // Tính độ chênh lệch (delta) giữa số lượng mới và cũ
+      const delta = newQuantity - Number(prevQuantity.current);
+
+      // Cập nhật lại Session của NextAuth
+      await update({
+        cartQuantity: Number(currentGlobalTotal) + delta,
+      });
+
+      // Cập nhật lại ref sau khi API thành công
+      prevQuantity.current = newQuantity;
     } catch (error) {
-      console.error("Lỗi cập nhật:", error);
+      console.error("Lỗi cập nhật số lượng:", error);
+      // Có thể thêm toast error ở đây
     }
   };
+
   const handleDeleteItem = async (VariantID: number) => {
     try {
       await deleteCartItemMutation.mutateAsync({ VariantID });
+
+      // Khi xóa item, trừ đi số lượng của item đó khỏi tổng giỏ hàng
+      await update({
+        cartQuantity: Math.max(
+          0,
+          Number(currentGlobalTotal) - Number(quantity),
+        ),
+      });
+
+      setQuantity(0);
+      queryClient.invalidateQueries({ queryKey: ["cart-items"] });
     } catch (error) {
-      console.log(error);
+      console.error("Lỗi xóa item:", error);
     }
   };
 
-  const prevQuantity = useRef(item.Quantity);
-  const currentGlobalTotal = useUserStore(
-    (state) => state.user?.cartQuantity || 0,
-  );
   useEffect(() => {
-    if (quantity !== prevQuantity.current && quantity !== "") {
-      const delta = Number(quantity) - Number(prevQuantity.current);
-
-      updateCartQuantity(Number(currentGlobalTotal) + delta);
+    if (quantity !== "") {
       onUpdateSubTotal(item.VariantID, Number(quantity) * item.Price);
-      prevQuantity.current = Number(quantity);
     }
   }, [quantity]);
+
+  // --- RENDER ---
   return (
     <div
-      key={item.CartItemID}
+      key={item.VariantID} // Dùng VariantID hoặc CartItemID cho key
       className="flex flex-col lg:flex-row border-b pb-4 gap-10"
     >
       <div className="flex-1 w-full">
@@ -88,10 +105,8 @@ export default function CartItem({
           <Button
             className="w-20 mt-5"
             variant={"destructive"}
-            onClick={() => {
-              handleDeleteItem(item.VariantID);
-              // setQuantity(0);
-            }}
+            onClick={() => handleDeleteItem(item.VariantID)}
+            disabled={deleteCartItemMutation.isPending} // Disable nút khi đang xóa
           >
             Delete
           </Button>

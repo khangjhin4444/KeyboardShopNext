@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     return [
       {
         // Khi Frontend gọi bất kỳ link nào bắt đầu bằng /api/...
-        source: "/api/:path*",
+        source: "/api/:path((?!auth).*)",
         // Vercel sẽ tự động proxy ngầm sang server thật
         destination: "https://keyboardshopnext.onrender.com/api/:path*",
       },
