@@ -162,6 +162,18 @@ export default function AuthPage() {
             >
               {isLogin ? "Login" : "Sign Up"}
             </button>
+            <button
+              type="button"
+              onClick={() => signIn("google", { callbackUrl: "/home" })}
+              className="w-full flex items-center justify-center gap-2 py-3 mt-4 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+            >
+              <img
+                src="https://authjs.dev/img/providers/google.svg"
+                alt="Google"
+                className="w-5 h-5"
+              />
+              Sign in with Google
+            </button>
           </form>
 
           {isLogin && (

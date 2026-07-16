@@ -123,4 +123,72 @@ router.post("/logout", (req, res) => {
     .json({ success: true, message: "Đăng xuất thành công, đã xóa Cookie" });
 });
 
+router.post("/google", async (req, res) => {
+  const { email, name } = req.body;
+
+  try {
+    // 1. Kiểm tra xem email này đã tồn tại trong DB chưa
+    let user = await sql`SELECT * FROM "user" WHERE "Username" = ${email}`;
+    let currentUser;
+
+    // 2. Nếu chưa có -> Tạo tài khoản tự động (Tự động thành role user)
+    if (user.length === 0) {
+      // Băm một mật khẩu ngẫu nhiên để tài khoản Google không đăng nhập bằng mật khẩu thường được
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      // Thêm vào Database
+      const insertRes = await sql`
+        INSERT INTO "user" ("Name", "Username", "Password", "Phone", "Address") 
+        VALUES (${name}, ${email}, ${hashedPassword}, '', '')
+        RETURNING *;
+      `;
+      currentUser = insertRes[0];
+    } else {
+      currentUser = user[0];
+    }
+
+    // 3. Khởi tạo role và lấy giỏ hàng
+    const role = currentUser.Username === "admin" ? "admin" : "user";
+    const cartQuantityResult = await sql`
+      SELECT COALESCE(SUM(ci."Quantity"), 0) AS total_quantity
+      FROM "cart" c
+      LEFT JOIN "cart_items" ci ON c."CartID" = ci."CartID"
+      WHERE c."UserID" = ${currentUser.UserID};
+    `;
+    const cartQuantity = cartQuantityResult[0]?.total_quantity ?? 0;
+
+    // 4. Tạo JWT Tokens
+    const accessToken = jwt.sign(
+      { userId: currentUser.UserID, role: role },
+      process.env.JWT_ACCESS_SECRET,
+      { expiresIn: "15m" },
+    );
+    const refreshToken = jwt.sign(
+      { userId: currentUser.UserID, role: role },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" },
+    );
+
+    // 5. Trả về cho NextAuth
+    res.status(200).json({
+      success: true,
+      accessToken,
+      refreshToken,
+      user: {
+        id: currentUser.UserID,
+        username: currentUser.Username, // Chính là email Google
+        cartQuantity: cartQuantity,
+        Name: currentUser.Name,
+        Phone: currentUser.Phone || "",
+        Address: currentUser.Address || "",
+        role: role,
+      },
+    });
+  } catch (error) {
+    console.log("Lỗi Google Login Backend:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+});
 module.exports = router;

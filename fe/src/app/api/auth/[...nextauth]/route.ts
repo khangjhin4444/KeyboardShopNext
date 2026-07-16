@@ -1,8 +1,12 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-
+import GoogleProvider from "next-auth/providers/google";
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -43,9 +47,9 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger, session, account, profile }) {
       // 1. Lần đầu đăng nhập: Lưu thông tin từ authorize() vào token
-      if (user) {
+      if (user && account?.provider === "credentials") {
         return {
           ...token,
           id: user.id,
@@ -60,6 +64,42 @@ export const authOptions: NextAuthOptions = {
           Phone: user.Phone,
         };
       }
+
+      if (account?.provider === "google" && profile) {
+        try {
+          const backendUrl = process.env.NEXT_PUBLIC_BASE_URL;
+          // Gọi sang Express để lấy thông tin (tạo mới hoặc lấy cũ)
+          const res = await fetch(`${backendUrl}/api/auth/google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: profile.email,
+              name: profile.name,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            return {
+              ...token,
+              id: data.user.id,
+              username: data.user.username,
+              role: data.user.role, // "user" đã được gán từ Express
+              accessToken: data.accessToken,
+              refreshToken: data.refreshToken,
+              accessTokenExpires: Date.now() + 15 * 60 * 1000,
+              cartQuantity: data.user.cartQuantity,
+              Address: data.user.Address,
+              Name: data.user.Name,
+              Phone: data.user.Phone,
+            };
+          }
+        } catch (error) {
+          console.error("Lỗi đồng bộ Google với Backend:", error);
+        }
+      }
+
       if (trigger === "update" && session) {
         // Cập nhật các giá trị mới vào token
         if (session.cartQuantity !== undefined)
