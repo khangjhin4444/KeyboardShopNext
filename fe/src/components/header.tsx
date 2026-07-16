@@ -19,12 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  CreditCardIcon,
-  LogOutIcon,
-  SettingsIcon,
-  UserIcon,
-} from "lucide-react";
+import { LogOutIcon, UserIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
