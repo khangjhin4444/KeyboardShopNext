@@ -50,7 +50,6 @@ router.post("/login", async (req, res) => {
                               WHERE c."UserID" = ${currentUser.UserID};`;
     const cartQuantity = cartQuantityResult[0]?.total_quantity ?? 0;
 
-    // 1. So sánh mật khẩu khách gửi với mã băm trong DB
     const isMatch = await bcrypt.compare(password, currentUser.Password);
     if (!isMatch) return res.status(400).json({ message: "Sai mật khẩu" });
 
@@ -66,24 +65,10 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" },
     );
 
-    // 3. Trả Refresh Token vào HttpOnly Cookie (Bảo mật tuyệt đối)
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
-    });
-    res.cookie("role", role, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
-    });
-
-    // 4. Trả Access Token về dạng JSON để Frontend lưu tạm
     res.status(200).json({
       success: true,
       accessToken,
+      refreshToken,
       user: {
         id: currentUser.UserID,
         username: currentUser.Username,
@@ -91,8 +76,8 @@ router.post("/login", async (req, res) => {
         Name: currentUser.Name,
         Phone: currentUser.Phone,
         Address: currentUser.Address,
+        role: role,
       },
-      role: role,
     });
   } catch (error) {
     console.log(error);
@@ -101,40 +86,27 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/refresh", (req, res) => {
-  // 1. Lấy Refresh Token từ Cookie mà trình duyệt tự động gửi lên
-  const refreshToken = req.cookies.refreshToken;
+  const { refreshToken } = req.body;
 
-  // Nếu không có token (khách chưa từng đăng nhập hoặc cookie bị xóa)
   if (!refreshToken) {
-    return res.status(401).json({
-      success: false,
-      message: "Không tìm thấy phiên đăng nhập, vui lòng đăng nhập lại!",
-    });
+    return res
+      .status(401)
+      .json({ success: false, message: "Thiếu refresh token!" });
   }
 
-  // 2. Kiểm tra tính hợp lệ và hạn sử dụng của Refresh Token
   jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-    if (err) {
-      // Lỗi xảy ra nếu Token bị giả mạo, sai Secret Key, hoặc đã hết hạn (quá 7 ngày)
-      return res.status(403).json({
-        success: false,
-        message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!",
-      });
-    }
+    if (err)
+      return res
+        .status(403)
+        .json({ success: false, message: "Token hết hạn!" });
 
-    // 3. Nếu mọi thứ hợp lệ, 'decoded' sẽ chứa thông tin { userId: ... }
-    // Tiến hành tạo Access Token MỚI với hạn sử dụng 15 phút
     const newAccessToken = jwt.sign(
       { userId: decoded.userId, role: decoded.role },
       process.env.JWT_ACCESS_SECRET,
       { expiresIn: "15m" },
     );
 
-    // 4. Trả Access Token mới về cho Frontend
-    res.status(200).json({
-      success: true,
-      accessToken: newAccessToken,
-    });
+    res.status(200).json({ success: true, accessToken: newAccessToken });
   });
 });
 
