@@ -11,11 +11,17 @@ const sql = neon(process.env.DATABASE_URL);
 router.post("/register", async (req, res) => {
   const { username, password, fullName, phone, address } = req.body;
   try {
-    // 1. Kiểm tra user tồn tại
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{10,20}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Password!",
+      });
+    }
     const existingUser =
       await sql`SELECT * FROM "user" WHERE "Username" = ${username}`;
     if (existingUser.length > 0)
-      return res.status(400).json({ message: "Username đã tồn tại" });
+      return res.status(400).json({ message: "Username existed!" });
 
     // 2. Băm mật khẩu (ĐÂY LÀ NƠI BCRYPT HOẠT ĐỘNG)
     const salt = await bcrypt.genSalt(10);
@@ -39,7 +45,7 @@ router.post("/login", async (req, res) => {
   try {
     const user = await sql`SELECT * FROM "user" WHERE "Username" = ${username}`;
     if (user.length === 0)
-      return res.status(400).json({ message: "Sai tài khoản" });
+      return res.status(400).json({ message: "Wrong Username or Password" });
 
     const currentUser = user[0];
     const role = currentUser.Username === "admin" ? "admin" : "user";
@@ -51,7 +57,8 @@ router.post("/login", async (req, res) => {
     const cartQuantity = cartQuantityResult[0]?.total_quantity ?? 0;
 
     const isMatch = await bcrypt.compare(password, currentUser.Password);
-    if (!isMatch) return res.status(400).json({ message: "Sai mật khẩu" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Wrong Usernam or Password!" });
 
     // 2. Tạo Access Token (sống 15 phút) và Refresh Token (sống 7 ngày)
     const accessToken = jwt.sign(
@@ -189,6 +196,21 @@ router.post("/google", async (req, res) => {
   } catch (error) {
     console.log("Lỗi Google Login Backend:", error);
     res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
+router.get("/check", async (req, res) => {
+  const { username } = req.query;
+  try {
+    const existingUser =
+      await sql`SELECT * FROM "user" WHERE "Username" = ${username}`;
+    if (existingUser.length > 0)
+      return res
+        .status(400)
+        .json({ exist: true, message: "Username existed!" });
+    return res.status(200).json({ exist: false, message: "ok" });
+  } catch (error) {
+    console.log(error);
   }
 });
 module.exports = router;
