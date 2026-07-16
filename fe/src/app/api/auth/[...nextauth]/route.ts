@@ -25,9 +25,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         const data = await res.json();
-
         if (res.ok && data.success) {
-          // Trả về dữ liệu để lưu vào token của NextAuth
           return {
             id: data.user.id,
             username: data.user.username,
