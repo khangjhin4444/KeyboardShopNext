@@ -224,6 +224,41 @@ const getProductsAdmin = async (req, res) => {
   }
 };
 
+const getProductByKeyword = async (req, res) => {
+  try {
+    const keyword = req.query.keyword || "";
+
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * 12;
+    const searchPattern = `%${keyword}%`;
+
+    const products = await sql`
+      SELECT * FROM (
+          SELECT DISTINCT ON (p."ProductID") 
+              p."ProductID", 
+              p."Name", 
+              p."Description", 
+              p."ProductType", 
+              p."SubType",
+              pv."MainImage" AS "MainImage",
+              pv."Price" AS "Price"
+          FROM "product" p
+          LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
+          WHERE p."Name" ILIKE ${searchPattern} 
+             OR p."Description" ILIKE ${searchPattern}
+          ORDER BY p."ProductID"
+        ) as standard_products
+        ORDER BY "ProductID" 
+        LIMIT 12 OFFSET ${offset}
+    `;
+
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    console.error("Lỗi tìm kiếm:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
 const deleteProductAdmin = async (req, res) => {
   try {
     const variantId = req.params.id;
@@ -351,4 +386,5 @@ module.exports = {
   getProductsAdmin,
   updateProductVariantAdmin,
   addProductAdmin,
+  getProductByKeyword,
 };
