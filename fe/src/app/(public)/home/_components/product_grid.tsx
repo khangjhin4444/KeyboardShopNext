@@ -1,23 +1,19 @@
-import React, { useState, useEffect, use } from "react";
-import { Badge } from "@/components/ui/badge";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {
   Card,
-  CardAction,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { ProductUsecase } from "@/features/products/usecase/products.usecase";
-import { LoaderCircle } from "lucide-react";
+
 import { clsx } from "clsx";
 import { useInView } from "react-intersection-observer";
 import { ProductSkeleton } from "./product_skeletion";
 import Sorting from "./sorting";
-import { router } from "next/client";
 export default function ProductGrid({ type }: { type: string }) {
   const [sort, setSort] = useState("default");
   const formatter = new Intl.NumberFormat("vi-VN");
@@ -67,7 +63,7 @@ export default function ProductGrid({ type }: { type: string }) {
                 {page.map((product) => (
                   <Card
                     key={product.ProductID}
-                    className="relative mx-auto w-full  max-w-sm pt-0"
+                    className="relative mx-auto transition-all duration-300 hover:scale-103 hover:shadow-xl w-full  max-w-sm pt-0"
                   >
                     <div
                       className="absolute inset-0 z-30 aspect-square cursor-pointer"
