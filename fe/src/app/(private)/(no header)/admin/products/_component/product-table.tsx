@@ -131,6 +131,7 @@ export default function ProductTable({ type }: { type: string }) {
         </div>
       )}
       <ProductFormDialog
+        initType={type}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSaved={(type: string) => {

@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { ImageUploader } from "./ImageUploader";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { AdminUsecase } from "@/features/admin/usecase/admin.usecase";
+import { init } from "next/dist/compiled/webpack/webpack";
 
 const PRODUCT_TYPES: { value: string; label: string }[] = [
   { value: "KeyboardKit", label: "Keyboard Kit" },
@@ -49,17 +50,19 @@ export type Variant = {
 };
 
 export function ProductFormDialog({
+  initType,
   open,
   onOpenChange,
   onSaved,
 }: {
+  initType: string;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSaved: (type: string) => void;
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<string>("KeyboardKit");
+  const [type, setType] = useState<string>(initType);
   const [subtype, setSubtype] = useState<string>("75%");
   const [extraImages, setExtraImages] = useState<File[]>([]);
 
@@ -92,7 +95,7 @@ export function ProductFormDialog({
 
     setName("");
     setDescription("");
-    setType("KeyboardKit");
+    setType(initType);
     setSubtype("75%");
     setVariants([
       {
