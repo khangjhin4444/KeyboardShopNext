@@ -43,11 +43,17 @@ type GetRelevantProducts = ({
   type: string;
 }) => Promise<ProductEntity[]>;
 
+type GetSearchProducts = (
+  keyword: string,
+  page: number,
+) => Promise<ProductEntity[]>;
+
 type ProductServiceType = {
   getProducts: GetProducts;
   getProductDetail: GetProductDetail;
   getRelevantProducts: GetRelevantProducts;
   getProductsCategory: GetProductsCategory;
+  getSearchProducts: GetSearchProducts;
 };
 
 export const ProductService: ProductServiceType = {
@@ -132,6 +138,7 @@ export const ProductService: ProductServiceType = {
       }
 
       const result = await response.json();
+
       const data = result.data.map((item: ProductEntity) =>
         convertToProductEntity(item),
       );
@@ -140,6 +147,22 @@ export const ProductService: ProductServiceType = {
     } catch (error) {
       console.error("Lỗi khi call API:", error);
       // Nếu có lỗi, Promise chuyển sang trạng thái Thất bại (Rejected)
+      throw error;
+    }
+  },
+  getSearchProducts: async function (keyword: string, page: number) {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/products/search?keyword=${keyword}&page=${page}`,
+      );
+      const result = await response.json();
+      console.log("result ", result);
+      const data = result.products.map((item: ProductEntity) =>
+        convertToProductEntity(item),
+      );
+      return data;
+    } catch (error) {
+      console.log(error);
       throw error;
     }
   },

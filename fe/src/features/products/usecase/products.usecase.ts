@@ -31,4 +31,7 @@ export const ProductUsecase = {
   }) => {
     return ProductService.getProductsCategory({ type, page, sort, sub });
   },
+  getSearchProduct: (keyword: string, page: number) => {
+    return ProductService.getSearchProducts(keyword, page);
+  },
 };

@@ -1,3 +1,5 @@
+import { ProductEntity } from "../entities/product.entity";
+
 export interface ProductResponseModel {
   ProductID: number;
   Name: string;
@@ -24,4 +26,9 @@ export interface ProductDetailResponseModel {
   SubType: string;
   images: string[];
   variants: Variant[];
+}
+
+export interface SearchProductResponseModel {
+  success: boolean;
+  products: ProductEntity[];
 }
