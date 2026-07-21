@@ -81,12 +81,19 @@ export default function Header() {
               {user?.cartQuantity}
             </div>
           </button>
+          <button
+            className="flex justify-center font-semibold text-[#FFEBCC] cursor-pointer items-center"
+            onClick={() => router.push("/orders")}
+          >
+            <ReceiptText className="mr-2 h-7 w-7" />
+            Orders
+          </button>
 
           {isAuth ? (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <CircleUserRound className="text-white w-8 h-8 cursor-pointer" />
+                  <CircleUserRound className="text-[#FFEBCC] w-8 h-8 cursor-pointer" />
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent className="w-30">
@@ -98,10 +105,10 @@ export default function Header() {
                       </DropdownMenuItem>
                     </DialogTrigger>
 
-                    <DropdownMenuItem onClick={() => router.push("/orders")}>
+                    {/* <DropdownMenuItem onClick={() => router.push("/orders")}>
                       <ReceiptText className="mr-2 h-4 w-4" />
                       Orders
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                   </DropdownMenuGroup>
 
                   <DropdownMenuSeparator />
