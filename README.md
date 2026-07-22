@@ -5,6 +5,7 @@ A modern, high-performance e-commerce frontend application specializing in mecha
 ## Tech Stack
 
 - **Framework:** Next.js (App Router)
+- **Database**: Neon
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **State Management & Fetching:** TanStack React Query
@@ -26,6 +27,7 @@ A modern, high-performance e-commerce frontend application specializing in mecha
 ### Prerequisites
 
 Ensure you have Node.js and npm (or yarn/pnpm) installed on your local machine.
+Have a Neon and ImgBB account.
 
 ### Installation
 
