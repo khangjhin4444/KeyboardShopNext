@@ -86,11 +86,11 @@ export default function ProductGrid({ type }: { type: string }) {
             )}
           >
             <Button
-              className="cursor-pointer bg-gray-800 hover:bg-gray-900 text-white text-lg px-8 py-6 rounded-full"
+              className="cursor-pointer bg-gray-400 text-lg p-4"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
             >
-              {isFetchingNextPage ? "Đang tải..." : "Xem thêm sản phẩm"}
+              {isFetchingNextPage ? "Loading..." : "Load More"}
             </Button>
           </div>
         </div>
