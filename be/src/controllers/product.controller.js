@@ -26,42 +26,78 @@ const getProducts = async (req, res) => {
     let products;
     if (!sub) {
       products = await sql`
-        SELECT * FROM (
-          SELECT DISTINCT ON (p."ProductID") 
-              p."ProductID", 
-              p."Name", 
-              p."Description", 
-              p."ProductType", 
-              p."SubType",
-              pv."MainImage" AS "MainImage",
-              pv."Price" AS "Price"
-          FROM "product" p
-          LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
-          WHERE p."ProductType" = ${type} 
-          ORDER BY p."ProductID" ASC, pv."Color" ASC
-        ) as standard_products
-        ORDER BY ${orderBySql}
-        LIMIT ${limit} OFFSET ${offset}
-      `;
+    WITH BaseProducts AS (
+      SELECT DISTINCT ON (p."ProductID") 
+          p."ProductID", 
+          p."Name", 
+          p."Description", 
+          p."ProductType", 
+          p."SubType",
+          pv."MainImage" AS "MainImage",
+          pv."Price" AS "Price"
+      FROM "product" p
+      LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
+      WHERE p."ProductType" = ${type} 
+      ORDER BY p."ProductID" ASC, pv."Color" ASC
+    ),
+    PaginatedProducts AS (
+      SELECT * FROM BaseProducts
+      ORDER BY ${orderBySql}
+      LIMIT ${limit} OFFSET ${offset}
+    )
+    SELECT 
+      pp.*,
+      (
+        SELECT json_agg(
+          json_build_object(
+            'colorText', pv_sub."Color",
+            'image', pv_sub."MainImage",
+            'price', pv_sub."Price"
+          )
+        )
+        FROM "product_variants" pv_sub
+        WHERE pv_sub."ProductID" = pp."ProductID"
+      ) AS variants
+    FROM PaginatedProducts pp
+    ORDER BY ${orderBySql}
+  `;
     } else {
       products = await sql`
-        SELECT * FROM (
-          SELECT DISTINCT ON (p."ProductID") 
-              p."ProductID", 
-              p."Name", 
-              p."Description", 
-              p."ProductType", 
-              p."SubType",
-              pv."MainImage" AS "MainImage",
-              pv."Price" AS "Price"
-          FROM "product" p
-          LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
-          WHERE p."ProductType" = ${type} AND p."SubType" = ${sub}
-          ORDER BY p."ProductID" ASC, pv."Color" ASC
-        ) as standard_products
-        ORDER BY ${orderBySql}
-        LIMIT ${limit} OFFSET ${offset}
-      `;
+    WITH BaseProducts AS (
+      SELECT DISTINCT ON (p."ProductID") 
+          p."ProductID", 
+          p."Name", 
+          p."Description", 
+          p."ProductType", 
+          p."SubType",
+          pv."MainImage" AS "MainImage",
+          pv."Price" AS "Price"
+      FROM "product" p
+      LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
+      WHERE p."ProductType" = ${type} AND p."SubType" = ${sub}
+      ORDER BY p."ProductID" ASC, pv."Color" ASC
+    ),
+    PaginatedProducts AS (
+      SELECT * FROM BaseProducts
+      ORDER BY ${orderBySql}
+      LIMIT ${limit} OFFSET ${offset}
+    )
+    SELECT 
+      pp.*,
+      (
+        SELECT json_agg(
+          json_build_object(
+            'colorText', pv_sub."Color",
+            'image', pv_sub."MainImage",
+            'price', pv_sub."Price"
+          )
+        )
+        FROM "product_variants" pv_sub
+        WHERE pv_sub."ProductID" = pp."ProductID"
+      ) AS variants
+    FROM PaginatedProducts pp
+    ORDER BY ${orderBySql}
+  `;
     }
     res.status(200).json({
       success: true,
