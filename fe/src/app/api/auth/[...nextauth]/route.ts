@@ -113,7 +113,8 @@ export const authOptions: NextAuthOptions = {
 
       // 3. Token hết hạn: Gọi API Express để lấy Access Token mới
       try {
-        const res = await fetch(`/api/auth/refresh`, {
+        const backendUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        const res = await fetch(`${backendUrl}/api/auth/refresh`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken: token.refreshToken }),
