@@ -12,6 +12,13 @@ export interface ProductEntity {
   SubType: string;
   MainImage: string;
   Price: number;
+  variants: SimpleVariant[];
+}
+
+export interface SimpleVariant {
+  colorText: string;
+  image: string;
+  price: number;
 }
 
 export interface Variant {
@@ -61,5 +68,6 @@ export const convertToProductEntity: ConvertResponseModelToEntityFieldsFunc<
     SubType: productResponse.SubType,
     MainImage: productResponse.MainImage,
     Price: productResponse.Price,
+    variants: productResponse.variants,
   };
 };

@@ -1,127 +1,97 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { ProductUsecase } from "@/features/products/usecase/products.usecase";
+"use client";
 
-import { clsx } from "clsx";
+import React, { useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
+import { clsx } from "clsx";
+
+import { Button } from "@/components/ui/button";
+import { ProductUsecase } from "@/features/products/usecase/products.usecase";
 import { ProductSkeleton } from "./product_skeletion";
 import Sorting from "./sorting";
+import { ProductCard } from "./product_card";
+
 export default function ProductGrid({ type }: { type: string }) {
   const [sort, setSort] = useState("default");
-  const formatter = new Intl.NumberFormat("vi-VN");
+
   const { ref, inView } = useInView({
-    triggerOnce: true, // Chỉ kích hoạt 1 lần duy nhất khi nhìn thấy
-    rootMargin: "300px 0px", // Khách cuộn gần tới nơi cách 200px là đã âm thầm load trước
+    triggerOnce: true,
+    rootMargin: "300px 0px",
   });
-  const router = useRouter();
 
-  const {
-    data,
-    fetchNextPage, // Hàm kích hoạt gọi trang tiếp theo (gọi khi bấm nút Load More)
-    hasNextPage, // Biến boolean kiểm tra xem còn trang kế tiếp không
-    isFetchingNextPage, // Trạng thái đang tải trang tiếp theo
-    isLoading,
-    isError,
-  } = useInfiniteQuery({
-    queryKey: ["infinite-products", type, sort],
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteQuery({
+      queryKey: ["infinite-products", type, sort],
+      queryFn: ({ pageParam = 1 }) =>
+        ProductUsecase.getProducts({ type, page: pageParam, sort }),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.length < 8) return undefined;
+        return allPages.length + 1;
+      },
+      enabled: inView,
+    });
 
-    queryFn: ({ pageParam = 1 }) =>
-      ProductUsecase.getProducts({ type, page: pageParam, sort }),
-
-    initialPageParam: 1,
-
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length < 8) return undefined;
-
-      return allPages.length + 1;
-    },
-    enabled: inView,
-  });
   const handleSortChange = (sortOpt: string) => {
     setSort(sortOpt);
   };
+
   return (
-    <div ref={ref}>
+    <div ref={ref} className="w-full">
       <Sorting onSortChange={handleSortChange} />
+
       {!inView || isLoading ? (
-        <div>
+        <div className="mt-10">
           <ProductSkeleton />
         </div>
       ) : (
-        <div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10 ">
-            {data?.pages.map((page, index) => (
-              <React.Fragment key={index}>
-                {page.map((product) => (
-                  <Card
-                    key={product.ProductID}
-                    className="relative mx-auto transition-all duration-300 hover:scale-103 hover:shadow-xl w-full  max-w-sm pt-0"
-                  >
-                    <div
-                      className="absolute inset-0 z-30 aspect-square cursor-pointer"
-                      onClick={() => {
-                        router.push(`/product/${product.ProductID}`);
-                      }}
-                    />
-                    <img
-                      src={product.MainImage}
-                      alt="Product Image"
-                      className="relative z-20 aspect-square w-full object-cover "
-                    />
-                    <CardHeader>
-                      <CardTitle className="h-12">{product.Name}</CardTitle>
-                      <CardDescription className="text-center font-semibold text-[#7c5c2c]">
-                        Price: {formatter.format(product.Price)} VND
-                      </CardDescription>
-                      <Button
-                        className="cursor-pointer w-full bg-[#8CC0EB] hover:bg-[#BFDDF0] mt-5"
-                        onClick={() =>
-                          router.push(`/product/${product.ProductID}`)
-                        }
-                      >
-                        View More
-                      </Button>
-                    </CardHeader>
-                  </Card>
+        <div className="w-full">
+          {/* Lưới sản phẩm siêu gọn gàng */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10 justify-items-center">
+            {data?.pages.map((page, pageIndex) => (
+              <React.Fragment key={`page-${pageIndex}`}>
+                {page.map((product: any) => (
+                  // Truyền toàn bộ dữ liệu product vào Card
+                  <ProductCard key={product.ProductID} product={product} />
                 ))}
               </React.Fragment>
             ))}
+
+            {/* Skeleton Loading khi tải trang tiếp theo */}
             {isFetchingNextPage && (
               <React.Fragment>
                 {Array.from({ length: 8 }).map((_, idx) => (
-                  <div key={`load-more-skeleton-${idx}`} className="opacity-70">
-                    {/* Bạn có thể tạo riêng 1 file single-card-skeleton hoặc lấy cấu trúc thô của Card bọc Skeleton */}
+                  <div
+                    key={`load-more-skeleton-${idx}`}
+                    className="w-full max-w-sm opacity-70"
+                  >
                     <div className="animate-pulse space-y-4">
-                      <div className="aspect-video w-full bg-gray-200 rounded-md dark:bg-gray-700" />
-                      <div className="h-4 bg-gray-200 rounded w-2/3 dark:bg-gray-700" />
-                      <div className="h-4 bg-gray-200 rounded w-full dark:bg-gray-700" />
+                      <div className="aspect-square w-full bg-gray-200 rounded-xl dark:bg-gray-700" />
+                      <div className="h-6 bg-gray-200 rounded w-2/3 mx-auto dark:bg-gray-700" />
+                      <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto dark:bg-gray-700" />
                     </div>
                   </div>
                 ))}
               </React.Fragment>
             )}
           </div>
+
+          {/* Nút Load More */}
           <div
-            className={clsx({
-              hidden: !hasNextPage,
-            })}
+            className={clsx(
+              "flex flex-row justify-center items-center w-full mt-12 mb-10",
+              {
+                hidden: !hasNextPage,
+              },
+            )}
           >
-            <div className="flex flex-row justify-center items-center w-full mt-10 mb-10">
-              <Button
-                className="cursor-pointer bg-gray-400 text-lg p-4"
-                onClick={() => fetchNextPage()}
-              >
-                Load more
-              </Button>
-            </div>
+            <Button
+              className="cursor-pointer bg-gray-800 hover:bg-gray-900 text-white text-lg px-8 py-6 rounded-full"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? "Đang tải..." : "Xem thêm sản phẩm"}
+            </Button>
           </div>
         </div>
       )}

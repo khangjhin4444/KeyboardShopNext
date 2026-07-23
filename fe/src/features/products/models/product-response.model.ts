@@ -1,4 +1,8 @@
-import { ProductEntity } from "../entities/product.entity";
+import {
+  ProductEntity,
+  SimpleVariant,
+  Variant,
+} from "../entities/product.entity";
 
 export interface ProductResponseModel {
   ProductID: number;
@@ -8,14 +12,7 @@ export interface ProductResponseModel {
   SubType: string;
   MainImage: string;
   Price: number;
-}
-
-export interface Variant {
-  VariantID: number;
-  Color: string;
-  Price: number;
-  Stock: number;
-  MainImage: string;
+  variants: SimpleVariant[];
 }
 
 export interface ProductDetailResponseModel {
