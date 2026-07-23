@@ -86,13 +86,15 @@ export default function AuthPage() {
     setErrorMsg("");
 
     try {
-      const res = await fetch(`/api/auth/register`, {
+      const backendUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      const res = await fetch(`${backendUrl}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, fullName, phone, address }),
       });
+      console.log(res);
       const data = await res.json();
-
+      console.log(data);
       if (data.success) {
         alert("Sign Up success, please Log In");
         setIsLogin(true);
@@ -101,7 +103,8 @@ export default function AuthPage() {
         setErrorMsg(data.message);
       }
     } catch (err) {
-      setErrorMsg("Fail to connect server");
+      setErrorMsg("Fail to connect server ");
+      console.log(err);
     }
   };
 
@@ -175,6 +178,7 @@ export default function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -223,6 +227,7 @@ export default function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -252,6 +257,7 @@ export default function AuthPage() {
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
+                      tabIndex={-1}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     >
                       {showConfirmPassword ? (
