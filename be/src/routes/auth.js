@@ -72,6 +72,13 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" },
     );
 
+    // Lưu refresh token vào DB (Token Rotation)
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 ngày
+    await sql`
+      INSERT INTO "refresh_tokens" ("user_id", "token", "expires_at")
+      VALUES (${currentUser.UserID}, ${refreshToken}, ${expiresAt})
+    `;
+
     res.status(200).json({
       success: true,
       accessToken,
@@ -92,7 +99,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/refresh", (req, res) => {
+router.post("/refresh", async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
@@ -101,33 +108,85 @@ router.post("/refresh", (req, res) => {
       .json({ success: false, message: "Thiếu refresh token!" });
   }
 
-  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-    if (err)
-      return res
-        .status(403)
-        .json({ success: false, message: "Token hết hạn!" });
+  try {
+    // 1. Verify JWT signature trước
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
+    // 2. Kiểm tra token có tồn tại trong DB không
+    const tokenRecord = await sql`
+      SELECT * FROM "refresh_tokens" WHERE "token" = ${refreshToken}
+    `;
+
+    if (tokenRecord.length === 0) {
+      // ⚠️ REUSE DETECTED: Token đã bị xóa nhưng có người dùng lại
+      // → Xóa TẤT CẢ refresh tokens của user này (an toàn tuyệt đối)
+      await sql`
+        DELETE FROM "refresh_tokens" WHERE "user_id" = ${decoded.userId}
+      `;
+      return res.status(403).json({
+        success: false,
+        message: "Refresh token đã bị thu hồi! Phát hiện tái sử dụng token.",
+      });
+    }
+
+    // 3. Xóa token cũ khỏi DB (vô hiệu hóa)
+    await sql`
+      DELETE FROM "refresh_tokens" WHERE "token" = ${refreshToken}
+    `;
+
+    // 4. Tạo cặp token MỚI
     const newAccessToken = jwt.sign(
       { userId: decoded.userId, role: decoded.role },
       process.env.JWT_ACCESS_SECRET,
       { expiresIn: "15m" },
     );
+    const newRefreshToken = jwt.sign(
+      { userId: decoded.userId, role: decoded.role },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" },
+    );
 
-    res.status(200).json({ success: true, accessToken: newAccessToken });
-  });
+    // 5. Lưu refresh token MỚI vào DB
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await sql`
+      INSERT INTO "refresh_tokens" ("user_id", "token", "expires_at")
+      VALUES (${decoded.userId}, ${newRefreshToken}, ${expiresAt})
+    `;
+
+    res.status(200).json({
+      success: true,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (err) {
+    return res
+      .status(403)
+      .json({ success: false, message: "Token hết hạn hoặc không hợp lệ!" });
+  }
 });
 
-router.post("/logout", (req, res) => {
-  // Dùng hàm clearCookie để ra lệnh cho trình duyệt xóa Cookie tên là 'refreshToken'
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-  });
+router.post("/logout", async (req, res) => {
+  const { refreshToken } = req.body;
 
-  res
-    .status(200)
-    .json({ success: true, message: "Đăng xuất thành công, đã xóa Cookie" });
+  if (!refreshToken) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Thiếu refresh token!" });
+  }
+
+  try {
+    // Xóa refresh token khỏi DB → token không thể dùng lại
+    await sql`
+      DELETE FROM "refresh_tokens" WHERE "token" = ${refreshToken}
+    `;
+
+    res
+      .status(200)
+      .json({ success: true, message: "Đăng xuất thành công, token đã bị thu hồi" });
+  } catch (error) {
+    console.log("Logout error:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
+  }
 });
 
 router.post("/google", async (req, res) => {
@@ -177,6 +236,13 @@ router.post("/google", async (req, res) => {
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "7d" },
     );
+
+    // Lưu refresh token vào DB (Token Rotation)
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await sql`
+      INSERT INTO "refresh_tokens" ("user_id", "token", "expires_at")
+      VALUES (${currentUser.UserID}, ${refreshToken}, ${expiresAt})
+    `;
 
     // 5. Trả về cho NextAuth
     res.status(200).json({

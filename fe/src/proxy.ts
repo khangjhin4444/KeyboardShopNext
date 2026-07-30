@@ -7,7 +7,6 @@ export async function proxy(request: NextRequest) {
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
-  console.log("=== DEBUG TOKEN VERIFICATION ===", token);
 
   const { pathname } = request.nextUrl;
 

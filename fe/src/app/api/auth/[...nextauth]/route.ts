@@ -111,7 +111,7 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // 3. Token hết hạn: Gọi API Express để lấy Access Token mới
+      // 3. Token hết hạn: Gọi API Express để lấy Access Token mới (Token Rotation)
       try {
         const backendUrl = process.env.NEXT_PUBLIC_BASE_URL;
         const res = await fetch(`${backendUrl}/api/auth/refresh`, {
@@ -127,6 +127,7 @@ export const authOptions: NextAuthOptions = {
         return {
           ...token,
           accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken, // Lưu refresh token MỚI từ rotation
           accessTokenExpires: Date.now() + 15 * 60 * 1000,
         };
       } catch (error) {
@@ -151,6 +152,21 @@ export const authOptions: NextAuthOptions = {
       session.accessToken = token.accessToken as string;
       session.error = token.error as string;
       return session;
+    },
+  },
+  events: {
+    // Khi signOut, gọi API backend để revoke refresh token trong DB
+    async signOut({ token }) {
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        await fetch(`${backendUrl}/api/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: token.refreshToken }),
+        });
+      } catch (error) {
+        console.error("Logout backend error:", error);
+      }
     },
   },
   session: { strategy: "jwt" },
