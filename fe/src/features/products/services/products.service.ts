@@ -9,13 +9,13 @@ const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 type GetProducts = ({
   type,
-  page,
+  cursor,
   sort,
 }: {
   type: string;
-  page: number;
+  cursor: string | null;
   sort: string;
-}) => Promise<ProductEntity[]>;
+}) => Promise<{ data: ProductEntity[]; nextCursor: string | null }>;
 
 type GetProductsCategory = ({
   type,
@@ -59,16 +59,16 @@ type ProductServiceType = {
 export const ProductService: ProductServiceType = {
   getProducts: async function ({
     type,
-    page,
+    cursor,
     sort,
   }: {
     type: string;
-    page: number;
+    cursor: string | null;
     sort: string;
   }) {
     try {
       const response = await fetch(
-        `${API_URL}/api/products?type=${type}&page=${page}&limit=8&sort=${sort}`,
+        `${API_URL}/api/products?type=${type}&cursor=${cursor}&limit=8&sort=${sort}`,
       );
 
       if (!response.ok) {
@@ -80,7 +80,7 @@ export const ProductService: ProductServiceType = {
         convertToProductEntity(item),
       );
       // Sau khi lấy dữ liệu thành công, return về đúng kiểu dữ liệu đã hứa (Product[])
-      return data;
+      return { data: data, nextCursor: result.nextCursor };
     } catch (error) {
       console.error("Lỗi khi call API:", error);
       // Nếu có lỗi, Promise chuyển sang trạng thái Thất bại (Rejected)

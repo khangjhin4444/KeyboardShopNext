@@ -22,12 +22,13 @@ export default function ProductGrid({ type }: { type: string }) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useInfiniteQuery({
       queryKey: ["infinite-products", type, sort],
-      queryFn: ({ pageParam = 1 }) =>
-        ProductUsecase.getProducts({ type, page: pageParam, sort }),
-      initialPageParam: 1,
+      queryFn: ({ pageParam = null }) =>
+        ProductUsecase.getProducts({ type, cursor: pageParam, sort }),
+      initialPageParam: null as string | null,
       getNextPageParam: (lastPage, allPages) => {
-        if (lastPage.length < 8) return undefined;
-        return allPages.length + 1;
+        // if (lastPage.length < 8) return undefined;
+        // return allPages.length + 1;
+        return lastPage.nextCursor || undefined;
       },
       enabled: inView,
     });
@@ -50,7 +51,7 @@ export default function ProductGrid({ type }: { type: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10 justify-items-center">
             {data?.pages.map((page, pageIndex) => (
               <React.Fragment key={`page-${pageIndex}`}>
-                {page.map((product: any) => (
+                {page.data.map((product: any) => (
                   // Truyền toàn bộ dữ liệu product vào Card
                   <ProductCard key={product.ProductID} product={product} />
                 ))}

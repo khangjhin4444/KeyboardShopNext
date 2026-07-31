@@ -5,109 +5,125 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const getProducts = async (req, res) => {
   try {
     const type = req.query.type;
-    const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 8;
     const sort = req.query.sort || "default";
     const sub = req.query.sub || null;
-    const offset = (page - 1) * limit;
 
-    // Lúc này bạn có thể tự do ORDER BY theo bất cứ trường nào bạn muốn!
+    // 1. Giải mã Cursor từ Frontend gửi lên (nếu có)
+    let cursor = null;
+    if (req.query.cursor) {
+      try {
+        const decoded = Buffer.from(req.query.cursor, "base64").toString(
+          "utf-8",
+        );
+        cursor = JSON.parse(decoded);
+      } catch (e) {
+        console.error("Lỗi parse cursor:", e);
+      }
+    }
+
+    // 2. Cấu hình câu lệnh Sắp xếp (ORDER BY) và Điều kiện con trỏ (WHERE cursor)
     let orderBySql = sql`"ProductID" ASC`;
+    let cursorCondition = sql``;
+
     if (sort === "price-asc") {
-      orderBySql = sql`"Price" ASC`;
+      orderBySql = sql`"Price" ASC, "ProductID" ASC`;
+      if (cursor) {
+        cursorCondition = sql`WHERE "Price" > ${cursor.value} OR ("Price" = ${cursor.value} AND "ProductID" > ${cursor.id})`;
+      }
     } else if (sort === "price-desc") {
-      orderBySql = sql`"Price" DESC`;
+      orderBySql = sql`"Price" DESC, "ProductID" ASC`;
+      if (cursor) {
+        cursorCondition = sql`WHERE "Price" < ${cursor.value} OR ("Price" = ${cursor.value} AND "ProductID" > ${cursor.id})`;
+      }
     } else if (sort === "name-asc") {
-      orderBySql = sql`"Name" ASC`;
+      orderBySql = sql`"Name" ASC, "ProductID" ASC`;
+      if (cursor) {
+        cursorCondition = sql`WHERE "Name" > ${cursor.value} OR ("Name" = ${cursor.value} AND "ProductID" > ${cursor.id})`;
+      }
     } else if (sort === "name-desc") {
-      orderBySql = sql`"Name" DESC`;
+      orderBySql = sql`"Name" DESC, "ProductID" ASC`;
+      if (cursor) {
+        cursorCondition = sql`WHERE "Name" < ${cursor.value} OR ("Name" = ${cursor.value} AND "ProductID" > ${cursor.id})`;
+      }
+    } else {
+      // Default: Chỉ sắp xếp theo ID
+      orderBySql = sql`"ProductID" ASC`;
+      if (cursor) {
+        cursorCondition = sql`WHERE "ProductID" > ${cursor.id}`;
+      }
     }
 
-    let products;
-    if (!sub) {
-      products = await sql`
-    WITH BaseProducts AS (
-      SELECT DISTINCT ON (p."ProductID") 
-          p."ProductID", 
-          p."Name", 
-          p."Description", 
-          p."ProductType", 
-          p."SubType",
-          pv."MainImage" AS "MainImage",
-          pv."Price" AS "Price"
-      FROM "product" p
-      LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
-      WHERE p."ProductType" = ${type} 
-      ORDER BY p."ProductID" ASC, pv."Color" ASC
-    ),
-    PaginatedProducts AS (
-      SELECT * FROM BaseProducts
-      ORDER BY ${orderBySql}
-      LIMIT ${limit} OFFSET ${offset}
-    )
-    SELECT 
-      pp.*,
-      (
-        SELECT json_agg(
-          json_build_object(
-            'colorText', pv_sub."Color",
-            'image', pv_sub."MainImage",
-            'price', pv_sub."Price"
+    // 3. Cấu hình bộ lọc Category và SubCategory
+    const categoryFilter = sub
+      ? sql`p."ProductType" = ${type} AND p."SubType" = ${sub}`
+      : sql`p."ProductType" = ${type}`;
+
+    // 4. Truy vấn CSDL
+    const products = await sql`
+      WITH BaseProducts AS (
+        SELECT DISTINCT ON (p."ProductID") 
+            p."ProductID", 
+            p."Name", 
+            p."Description", 
+            p."ProductType", 
+            p."SubType",
+            pv."MainImage" AS "MainImage",
+            pv."Price" AS "Price"
+        FROM "product" p
+        LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
+        WHERE ${categoryFilter}
+        ORDER BY p."ProductID" ASC, pv."Color" ASC
+      ),
+      PaginatedProducts AS (
+        SELECT * FROM BaseProducts
+        ${cursorCondition}
+        ORDER BY ${orderBySql}
+        LIMIT ${limit}
+      )
+      SELECT 
+        pp.*,
+        (
+          SELECT json_agg(
+            json_build_object(
+              'colorText', pv_sub."Color",
+              'image', pv_sub."MainImage",
+              'price', pv_sub."Price"
+            )
           )
-        )
-        FROM "product_variants" pv_sub
-        WHERE pv_sub."ProductID" = pp."ProductID"
-      ) AS variants
-    FROM PaginatedProducts pp
-    ORDER BY ${orderBySql}
-  `;
-    } else {
-      products = await sql`
-    WITH BaseProducts AS (
-      SELECT DISTINCT ON (p."ProductID") 
-          p."ProductID", 
-          p."Name", 
-          p."Description", 
-          p."ProductType", 
-          p."SubType",
-          pv."MainImage" AS "MainImage",
-          pv."Price" AS "Price"
-      FROM "product" p
-      LEFT JOIN "product_variants" pv ON p."ProductID" = pv."ProductID"
-      WHERE p."ProductType" = ${type} AND p."SubType" = ${sub}
-      ORDER BY p."ProductID" ASC, pv."Color" ASC
-    ),
-    PaginatedProducts AS (
-      SELECT * FROM BaseProducts
+          FROM "product_variants" pv_sub
+          WHERE pv_sub."ProductID" = pp."ProductID"
+        ) AS variants
+      FROM PaginatedProducts pp
       ORDER BY ${orderBySql}
-      LIMIT ${limit} OFFSET ${offset}
-    )
-    SELECT 
-      pp.*,
-      (
-        SELECT json_agg(
-          json_build_object(
-            'colorText', pv_sub."Color",
-            'image', pv_sub."MainImage",
-            'price', pv_sub."Price"
-          )
-        )
-        FROM "product_variants" pv_sub
-        WHERE pv_sub."ProductID" = pp."ProductID"
-      ) AS variants
-    FROM PaginatedProducts pp
-    ORDER BY ${orderBySql}
-  `;
+    `;
+
+    // 5. Tạo nextCursor cho lần gọi tiếp theo
+    let nextCursor = null;
+    if (products.length === limit) {
+      const lastProduct = products[products.length - 1];
+      let cursorData = { id: lastProduct.ProductID };
+
+      // Lưu giá trị tie-breaker tương ứng với kiểu sort
+      if (sort.startsWith("price")) {
+        cursorData.value = lastProduct.Price;
+      } else if (sort.startsWith("name")) {
+        cursorData.value = lastProduct.Name;
+      }
+
+      // Mã hóa thành chuỗi Base64 để gửi về Frontend cho an toàn và gọn gàng
+      nextCursor = Buffer.from(JSON.stringify(cursorData)).toString("base64");
     }
+
     res.status(200).json({
       success: true,
-      currentPage: page,
       limit: limit,
       count: products.length,
       data: products,
+      nextCursor: nextCursor, // Frontend sẽ dùng chuỗi này thay cho `page`
     });
   } catch (error) {
-    console.error("❌ Lỗi phân trang:", error);
+    console.error("Lỗi phân trang cursor:", error);
     res.status(500).json({ success: false, message: "Lỗi lấy dữ liệu!" });
   }
 };

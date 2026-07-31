@@ -3,14 +3,14 @@ import { ProductService } from "../services/products.service";
 export const ProductUsecase = {
   getProducts: ({
     type,
-    page,
+    cursor,
     sort,
   }: {
     type: string;
-    page: number;
+    cursor: string | null;
     sort: string;
   }) => {
-    return ProductService.getProducts({ type, page, sort });
+    return ProductService.getProducts({ type, cursor, sort });
   },
   getProductDetail: (id: number) => {
     return ProductService.getProductDetail({ id });
