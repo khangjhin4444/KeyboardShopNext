@@ -19,12 +19,13 @@ export default function Quantity({
   isCart,
   onUpdateCart,
 }: QuantityProps) {
-  const isFirstRender = useRef(true);
   const initialQuantity = useRef(quantity);
   const onUpdateCartRef = useRef(onUpdateCart);
+
   useEffect(() => {
     onUpdateCartRef.current = onUpdateCart;
   }, [onUpdateCart]);
+
   const handleQuantityChange = (
     type: "decrease" | "increase" | "input",
     value?: string | number,
@@ -70,10 +71,6 @@ export default function Quantity({
         clearTimeout(handler);
       };
     }
-
-    // 3. ĐIỂM CHỐT HẠ: Xóa onUpdateCart ra khỏi dependency array!
-    // Giờ đây useEffect chỉ bị kích hoạt DUY NHẤT khi biến 'quantity' thay đổi
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quantity, isCart]);
 
   return (

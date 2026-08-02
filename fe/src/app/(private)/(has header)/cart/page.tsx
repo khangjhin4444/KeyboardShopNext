@@ -7,24 +7,38 @@ import { CartItemEntity } from "@/features/cart/entities/cart.entity";
 import CartItem from "./cartItem";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function CartPage() {
   const router = useRouter();
   const formatter = new Intl.NumberFormat("vi-VN");
   const [subTotals, setSubTotals] = useState<Record<number, number>>({});
-  const { data, isLoading, isError, error, isFetching } = useQuery({
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["cart-items"],
     queryFn: () => CartUsecase.getCartItems(),
   });
   const cartItems = data?.items || [];
+  // useEffect(() => {
+  //   cartItems.forEach((item: CartItemEntity) => {
+  //     setSubTotals((prev) => ({
+  //       ...prev,
+  //       [item.VariantID]: item.Quantity * item.Price,
+  //     }));
+  //   });
+  // }, [cartItems, selectedIds]);
+
   useEffect(() => {
-    cartItems.forEach((item: CartItemEntity) => {
-      setSubTotals((prev) => ({
-        ...prev,
-        [item.VariantID]: item.Price * item.Quantity,
-      }));
-    });
-  }, [cartItems]);
+    if (cartItems.length > 0 && !isInitialized) {
+      const allVariantIds = cartItems.map(
+        (item: CartItemEntity) => item.VariantID,
+      );
+      setSelectedIds(allVariantIds);
+      setIsInitialized(true);
+    }
+  }, [cartItems, isInitialized]);
 
   // UI khi đang tải
   if (isLoading) {
@@ -35,6 +49,27 @@ export default function CartPage() {
     );
   }
 
+  const handleCheckboxChange = (variantId: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(variantId)
+        ? prev.filter((id) => id !== variantId)
+        : [...prev, variantId],
+    );
+  };
+
+  const handleCheckout = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one item to checkout.");
+      return;
+    }
+    const itemsToCheckout = cartItems.filter((item) =>
+      selectedIds.includes(item.VariantID),
+    );
+    sessionStorage.setItem("checkout_session", JSON.stringify(itemsToCheckout));
+
+    router.push("/checkout");
+  };
+
   // UI khi lỗi (không phải lỗi hết session)
   if (isError && error?.message !== "SESSION_EXPIRED") {
     return (
@@ -43,10 +78,9 @@ export default function CartPage() {
       </div>
     );
   }
-  const grandTotal = Object.values(subTotals).reduce(
-    (sum, val) => sum + val,
-    0,
-  );
+  const grandTotal = selectedIds.reduce((sum, variantId) => {
+    return sum + (subTotals[variantId] || 0);
+  }, 0);
   const handleUpdateSubTotal = (VariantId: number, TotalAmount: number) => {
     setSubTotals((prev) => ({
       ...prev,
@@ -65,6 +99,8 @@ export default function CartPage() {
         <div className="space-y-6">
           {cartItems.map((item: CartItemEntity) => (
             <CartItem
+              checkboxList={selectedIds}
+              onCheckboxChange={handleCheckboxChange}
               item={item}
               key={item.CartItemID}
               onUpdateSubTotal={handleUpdateSubTotal}
@@ -76,9 +112,7 @@ export default function CartPage() {
             </div>
 
             <button
-              onClick={() => {
-                router.push("/checkout");
-              }}
+              onClick={handleCheckout}
               className="bg-[#3B9AB8] text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-600 transition cursor-pointer"
             >
               Process Payment

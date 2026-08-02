@@ -97,7 +97,7 @@ export default function Page() {
     return new Intl.NumberFormat("vi-VN").format(amount) + "VND";
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!activeVariant) {
       toast("Choose a variant");
       return;
@@ -121,7 +121,7 @@ export default function Page() {
 
         return res;
       });
-
+    await update({ cartQuantity: Number(currentQuantity) + qty });
     toast.promise(addToCartPromise, {
       loading: "Adding to Cart...",
       success: (data) => {
