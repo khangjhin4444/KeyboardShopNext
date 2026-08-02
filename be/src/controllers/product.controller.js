@@ -11,7 +11,7 @@ const getProducts = async (req, res) => {
 
     // 1. Giải mã Cursor từ Frontend gửi lên (nếu có)
     let cursor = null;
-    if (req.query.cursor) {
+    if (req.query.cursor !== "null") {
       try {
         const decoded = Buffer.from(req.query.cursor, "base64").toString(
           "utf-8",
