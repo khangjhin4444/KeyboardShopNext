@@ -32,6 +32,9 @@ export default function CartItem({
     cartQuantityRef.current = session?.user?.cartQuantity || 0;
   }, [session?.user?.cartQuantity]);
 
+  // Queue đảm bảo các lần gọi API chạy tuần tự, không song song
+  const updateQueueRef = useRef<Promise<void>>(Promise.resolve());
+
   const changeItemQuantityMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
       return CartUsecase.changeItemQuantity(payload);
@@ -46,29 +49,33 @@ export default function CartItem({
 
   // --- HANDLERS ---
 
-  const handleUpdateCartAPI = async (newQuantity: number) => {
+  const handleUpdateCartAPI = (newQuantity: number) => {
     const oldQuantity = Number(prevQuantity.current);
     const delta = newQuantity - oldQuantity;
     // Cập nhật prevQuantity ngay để các lần click tiếp theo tính delta đúng
     prevQuantity.current = newQuantity;
-    try {
-      await changeItemQuantityMutation.mutateAsync({
-        VariantID: item.VariantID,
-        Quantity: newQuantity,
-      });
 
-      // Đọc giá trị mới nhất từ ref thay vì closure cũ
-      const latestCartQuantity = cartQuantityRef.current;
-      await update({
-        cartQuantity: Number(latestCartQuantity) + delta,
-      });
-    } catch (error) {
-      console.error("Lỗi cập nhật số lượng:", error);
-      // Rollback prevQuantity khi lỗi
-      prevQuantity.current = oldQuantity;
-      // Rollback UI quantity
-      setQuantity(oldQuantity);
-    }
+    // Chain vào queue: lần gọi mới luôn đợi lần trước xong
+    updateQueueRef.current = updateQueueRef.current.then(async () => {
+      try {
+        await changeItemQuantityMutation.mutateAsync({
+          VariantID: item.VariantID,
+          Quantity: newQuantity,
+        });
+
+        // Đọc giá trị mới nhất từ ref — lúc này lần trước đã update xong
+        const latestCartQuantity = cartQuantityRef.current;
+        await update({
+          cartQuantity: Number(latestCartQuantity) + delta,
+        });
+      } catch (error) {
+        console.error("Lỗi cập nhật số lượng:", error);
+        // Rollback prevQuantity khi lỗi
+        prevQuantity.current = oldQuantity;
+        // Rollback UI quantity
+        setQuantity(oldQuantity);
+      }
+    });
   };
 
   const handleDeleteItem = async (VariantID: number) => {
