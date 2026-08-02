@@ -6,11 +6,16 @@ import Quantity from "@/components/quantity";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
 import { useSession } from "next-auth/react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function CartItem({
+  checkboxList,
+  onCheckboxChange,
   item,
   onUpdateSubTotal,
 }: {
+  checkboxList: number[];
+  onCheckboxChange: (variantId: number) => void;
   item: CartItemEntity;
   onUpdateSubTotal: (VariantID: number, TotalAmount: number) => void;
 }) {
@@ -21,7 +26,11 @@ export default function CartItem({
   const [quantity, setQuantity] = useState<number | string>(item.Quantity);
   const prevQuantity = useRef(item.Quantity);
 
-  const currentGlobalTotal = session?.user?.cartQuantity || 0;
+  // Dùng ref để luôn lấy giá trị cartQuantity mới nhất, tránh stale closure
+  const cartQuantityRef = useRef(session?.user?.cartQuantity || 0);
+  useEffect(() => {
+    cartQuantityRef.current = session?.user?.cartQuantity || 0;
+  }, [session?.user?.cartQuantity]);
 
   const changeItemQuantityMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
@@ -38,25 +47,27 @@ export default function CartItem({
   // --- HANDLERS ---
 
   const handleUpdateCartAPI = async (newQuantity: number) => {
+    const oldQuantity = Number(prevQuantity.current);
+    const delta = newQuantity - oldQuantity;
+    // Cập nhật prevQuantity ngay để các lần click tiếp theo tính delta đúng
+    prevQuantity.current = newQuantity;
     try {
       await changeItemQuantityMutation.mutateAsync({
         VariantID: item.VariantID,
         Quantity: newQuantity,
       });
 
-      // Tính độ chênh lệch (delta) giữa số lượng mới và cũ
-      const delta = newQuantity - Number(prevQuantity.current);
-
-      // Cập nhật lại Session của NextAuth
+      // Đọc giá trị mới nhất từ ref thay vì closure cũ
+      const latestCartQuantity = cartQuantityRef.current;
       await update({
-        cartQuantity: Number(currentGlobalTotal) + delta,
+        cartQuantity: Number(latestCartQuantity) + delta,
       });
-
-      // Cập nhật lại ref sau khi API thành công
-      prevQuantity.current = newQuantity;
     } catch (error) {
       console.error("Lỗi cập nhật số lượng:", error);
-      // Có thể thêm toast error ở đây
+      // Rollback prevQuantity khi lỗi
+      prevQuantity.current = oldQuantity;
+      // Rollback UI quantity
+      setQuantity(oldQuantity);
     }
   };
 
@@ -68,7 +79,7 @@ export default function CartItem({
       await update({
         cartQuantity: Math.max(
           0,
-          Number(currentGlobalTotal) - Number(quantity),
+          Number(cartQuantityRef.current) - Number(quantity),
         ),
       });
 
@@ -91,6 +102,14 @@ export default function CartItem({
       key={item.VariantID} // Dùng VariantID hoặc CartItemID cho key
       className="flex flex-col lg:flex-row border-b pb-4 gap-10"
     >
+      <div className="flex items-center">
+        <Checkbox
+          className="w-6 h-6 border-2 border-black"
+          checked={checkboxList.includes(item.VariantID)}
+          onCheckedChange={() => onCheckboxChange(item.VariantID)}
+        />
+      </div>
+
       <div className="flex-1 w-full">
         <img
           src={item.MainImage}
