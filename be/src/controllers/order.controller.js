@@ -62,17 +62,31 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Không thể hủy đơn hàng này. Đơn hàng không tồn tại hoặc đã vượt qua giai đoạn chờ xử lý.",
+          "Cannot cancel this order. The order does not exist or has already passed the pending stage.",
       });
+    }
+
+    const orderItems = await sql`
+      SELECT "VariantID", "Quantity"
+      FROM "order_items"
+      WHERE "OrderID" = ${orderID};
+    `;
+
+    for (const item of orderItems) {
+      await sql`
+        UPDATE "product_variants"
+        SET "Stock" = "Stock" + ${item.Quantity}
+        WHERE "VariantID" = ${item.VariantID};
+      `;
     }
 
     return res.status(200).json({
       success: true,
-      message: "Đã hủy đơn hàng thành công!",
+      message: "Successfully canceled the order!",
     });
   } catch (error) {
-    console.error("Lỗi khi hủy đơn hàng:", error);
-    return res.status(500).json({ success: false, message: "Lỗi máy chủ." });
+    console.error("Error canceling order:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
   }
 };
 
