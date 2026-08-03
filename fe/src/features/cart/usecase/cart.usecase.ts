@@ -32,6 +32,8 @@ export const CartUsecase = {
     shipping,
     payment,
     total,
+    variantIds,
+    buyNowItems,
   }: {
     name: string;
     phone: string;
@@ -39,6 +41,8 @@ export const CartUsecase = {
     shipping: string;
     payment: string;
     total: number;
+    variantIds?: number[];
+    buyNowItems?: { VariantID: number; Quantity: number };
   }) => {
     return CartService.placeOrder({
       name,
@@ -47,6 +51,11 @@ export const CartUsecase = {
       shipping,
       payment,
       total,
+      variantIds,
+      buyNowItems,
     });
+  },
+  getCartQuantity: async () => {
+    return CartService.getCartQuantity();
   },
 };

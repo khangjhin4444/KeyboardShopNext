@@ -13,7 +13,7 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Toggle cho confirm password
   const [errorMsg, setErrorMsg] = useState("");
-
+  const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -62,7 +62,7 @@ export default function AuthPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-
+    setIsLoading(true);
     try {
       const res = await signIn("credentials", {
         username,
@@ -78,6 +78,8 @@ export default function AuthPage() {
       }
     } catch (err) {
       setErrorMsg("Fail to connect server");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -187,7 +189,7 @@ export default function AuthPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={!username || !password}
+                  disabled={!username || !password || isLoading}
                   className="w-full py-3 bg-[#3B9AB8] text-white rounded-lg font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   Login

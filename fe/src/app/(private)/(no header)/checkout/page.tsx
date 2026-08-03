@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
@@ -12,16 +12,28 @@ import { useSession } from "next-auth/react";
 export default function Page() {
   const { data: session, update } = useSession();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const formatter = new Intl.NumberFormat("vi-VN");
-
+  const [checkoutItems, setCheckoutItems] = useState<CartItemEntity[]>([]);
+  const [checkoutMode, setCheckoutMode] = useState<"cart" | "buy_now">("cart");
   const user = session?.user;
 
-  // Gọi API lấy giỏ hàng
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["cart-items"],
-    queryFn: () => CartUsecase.getCartItems(),
-  });
-  const cartItems: CartItemEntity[] = data?.items || [];
+  useEffect(() => {
+    // Chỉ chạy trên client-side
+    const cartData = sessionStorage.getItem("checkout_session");
+    const buyNowData = sessionStorage.getItem("buy_now_session");
+
+    if (buyNowData) {
+      setCheckoutItems(JSON.parse(buyNowData) as CartItemEntity[]);
+      setCheckoutMode("buy_now");
+    } else if (cartData) {
+      setCheckoutItems(JSON.parse(cartData) as CartItemEntity[]);
+      setCheckoutMode("cart");
+    } else {
+      // Nếu user vào thẳng URL /checkout mà không có dữ liệu, đá về giỏ hàng
+      router.push("/cart");
+    }
+  }, [router]);
 
   // State lưu trữ thông tin form
   const [formData, setFormData] = useState({
@@ -49,7 +61,7 @@ export default function Page() {
   }, [user]);
 
   // Tính toán Tiền bạc
-  const subTotal = cartItems.reduce(
+  const subTotal = checkoutItems.reduce(
     (sum, item) => sum + item.Price * item.Quantity,
     0,
   );
@@ -76,13 +88,26 @@ export default function Page() {
       shipping: string;
       payment: string;
       total: number;
+      variantIds?: number[];
+      buyNowItems?: { VariantID: number; Quantity: number };
     }) => {
       return CartUsecase.placeOrder(payload); // Trả kết quả về cho onSuccess xử lý
     },
     onSuccess: async () => {
-      await update({
-        cartQuantity: 0,
-      });
+      sessionStorage.removeItem("checkout_session");
+      sessionStorage.removeItem("buy_now_session");
+
+      if (checkoutMode === "cart") {
+        const cartQuantity = await CartUsecase.getCartQuantity();
+        await update({
+          cartQuantity: cartQuantity,
+        });
+        queryClient.invalidateQueries({ queryKey: ["cart-items"] });
+      }
+
+      setTimeout(() => {
+        router.push("/");
+      }, 3000);
     },
   });
 
@@ -92,12 +117,21 @@ export default function Page() {
       return;
     }
 
-    const orderPayload = {
+    let orderPayload: any = {
       ...formData,
       shipping: shippingMethod,
       payment: paymentMethod,
       total: grandTotal,
     };
+
+    if (checkoutMode === "buy_now") {
+      orderPayload.buyNowItems = checkoutItems.map((item) => ({
+        VariantID: item.VariantID,
+        Quantity: item.Quantity,
+      }));
+    } else {
+      orderPayload.variantIds = checkoutItems.map((item) => item.VariantID);
+    }
 
     console.log("Submitting Order: ", orderPayload);
     const placeOrderPromise = placeOrderMutation
@@ -106,7 +140,7 @@ export default function Page() {
         if (!res.success) {
           throw new Error(res.message || "Failed to place order");
         }
-
+        // setCheckoutItems([]);
         return res;
       });
     toast.promise(placeOrderPromise, {
@@ -120,21 +154,21 @@ export default function Page() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen w-full">
-        <LoaderCircle className="animate-spin text-[#3B9AB8]" size={48} />
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex justify-center items-center h-screen w-full">
+  //       <LoaderCircle className="animate-spin text-[#3B9AB8]" size={48} />
+  //     </div>
+  //   );
+  // }
 
-  if (isError) {
-    return (
-      <div className="text-center text-red-500 mt-10">
-        Lỗi tải giỏ hàng để thanh toán!
-      </div>
-    );
-  }
+  // if (isError) {
+  //   return (
+  //     <div className="text-center text-red-500 mt-10">
+  //       Lỗi tải giỏ hàng để thanh toán!
+  //     </div>
+  //   );
+  // }
 
   return (
     <section className="bg-white min-h-screen pb-20">
@@ -297,13 +331,13 @@ export default function Page() {
             <div className="flex items-end gap-2 mb-6">
               <h4 className="text-2xl font-bold">Cart</h4>
               <span className="text-xl text-gray-500">
-                ({cartItems.length} Products)
+                ({checkoutItems.length} Products)
               </span>
             </div>
 
             {/* Danh sách sản phẩm cuộn được */}
-            <div className="max-h-95 overflow-y-auto pr-2 space-y-5 scrollbar-thin scrollbar-thumb-gray-300">
-              {cartItems.map((item) => (
+            <div className="max-h-95 overflow-y-auto pt-2 pr-2 space-y-5 scrollbar-thin scrollbar-thumb-gray-300">
+              {checkoutItems.map((item) => (
                 <div
                   key={item.VariantID}
                   className="flex gap-4 pb-4 border-b border-gray-100 last:border-0"
@@ -364,9 +398,12 @@ export default function Page() {
               </button>
               <button
                 onClick={handleOrder}
-                className="w-1/2 py-3 px-2 cursor-pointer bg-black text-white rounded-lg font-bold text-lg hover:bg-gray-800 transition"
+                disabled={
+                  placeOrderMutation.isPending || placeOrderMutation.isSuccess
+                }
+                className="w-1/2 py-3 px-2 cursor-pointer bg-black text-white rounded-lg font-bold text-lg hover:bg-gray-800 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                ORDER NOW
+                {placeOrderMutation.isPending ? "PROCESSING..." : "ORDER NOW"}
               </button>
             </div>
           </div>

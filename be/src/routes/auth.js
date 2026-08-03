@@ -67,7 +67,7 @@ router.post("/login", async (req, res) => {
       { expiresIn: "15m" },
     );
     const refreshToken = jwt.sign(
-      { userId: currentUser.UserID, role: role },
+      { userId: currentUser.UserID, role: role, jti: crypto.randomUUID() },
       process.env.JWT_REFRESH_SECRET,
       { expiresIn: "7d" },
     );
@@ -182,7 +182,10 @@ router.post("/logout", async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, message: "Đăng xuất thành công, token đã bị thu hồi" });
+      .json({
+        success: true,
+        message: "Đăng xuất thành công, token đã bị thu hồi",
+      });
   } catch (error) {
     console.log("Logout error:", error);
     res.status(500).json({ success: false, message: "Lỗi server" });

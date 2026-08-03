@@ -44,6 +44,8 @@ type PlaceOrder = ({
   shipping,
   payment,
   total,
+  variantIds,
+  buyNowItems,
 }: {
   name: string;
   phone: string;
@@ -51,7 +53,11 @@ type PlaceOrder = ({
   shipping: string;
   payment: string;
   total: number;
+  variantIds?: number[];
+  buyNowItems?: { VariantID: number; Quantity: number };
 }) => Promise<PlaceOrderResponseEntity>;
+
+type getCartQuantity = () => Promise<number>;
 
 type CartService = {
   addToCart: AddToCart;
@@ -59,6 +65,7 @@ type CartService = {
   changeQuantity: ChangeItemQuantity;
   deleteCartItem: DeleteCartItem;
   placeOrder: PlaceOrder;
+  getCartQuantity: getCartQuantity;
 };
 
 export const CartService: CartService = {
@@ -115,6 +122,8 @@ export const CartService: CartService = {
     shipping,
     payment,
     total,
+    variantIds,
+    buyNowItems,
   }: {
     name: string;
     phone: string;
@@ -122,6 +131,8 @@ export const CartService: CartService = {
     shipping: string;
     payment: string;
     total: number;
+    variantIds?: number[];
+    buyNowItems?: { VariantID: number; Quantity: number };
   }) {
     const response = await fetchWithAuth(`${API_URL}/api/cart/checkout`, {
       method: "POST",
@@ -135,9 +146,20 @@ export const CartService: CartService = {
         shipping,
         payment,
         total,
+        variantIds,
+        buyNowItems,
       }),
     });
 
     return convertToPlaceOrderResponseEntity(response);
+  },
+  getCartQuantity: async function () {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/api/cart/quantity`);
+      return response.quantity;
+    } catch (error) {
+      console.error("Error fetching cart quantity:", error);
+      return 0;
+    }
   },
 };

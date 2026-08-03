@@ -63,10 +63,10 @@ export default function CartItem({
           Quantity: newQuantity,
         });
 
-        // Đọc giá trị mới nhất từ ref — lúc này lần trước đã update xong
-        const latestCartQuantity = cartQuantityRef.current;
+        // Đọc giá trị từ server cho chính xác 100%
+        const realCartQuantity = await CartUsecase.getCartQuantity();
         await update({
-          cartQuantity: Number(latestCartQuantity) + delta,
+          cartQuantity: realCartQuantity,
         });
       } catch (error) {
         console.error("Lỗi cập nhật số lượng:", error);
@@ -82,12 +82,10 @@ export default function CartItem({
     try {
       await deleteCartItemMutation.mutateAsync({ VariantID });
 
-      // Khi xóa item, trừ đi số lượng của item đó khỏi tổng giỏ hàng
+      // Khi xóa item, lấy lại tổng số lượng thực tế từ backend
+      const realCartQuantity = await CartUsecase.getCartQuantity();
       await update({
-        cartQuantity: Math.max(
-          0,
-          Number(cartQuantityRef.current) - Number(quantity),
-        ),
+        cartQuantity: realCartQuantity,
       });
 
       setQuantity(0);

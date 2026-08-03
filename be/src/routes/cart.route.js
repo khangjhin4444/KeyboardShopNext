@@ -17,4 +17,6 @@ router.delete("/delete", cartController.deleteCartItem);
 
 router.post("/checkout", cartController.placeOrder);
 
+router.get("/quantity", cartController.getCartQuantity);
+
 module.exports = router;

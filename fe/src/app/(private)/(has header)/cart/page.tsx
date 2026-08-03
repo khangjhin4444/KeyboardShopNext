@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CartItemEntity } from "@/features/cart/entities/cart.entity";
 import CartItem from "./cartItem";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 export default function CartPage() {
@@ -14,31 +14,29 @@ export default function CartPage() {
   const formatter = new Intl.NumberFormat("vi-VN");
   const [subTotals, setSubTotals] = useState<Record<number, number>>({});
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const initializedVariantsRef = useRef(new Set<number>());
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["cart-items"],
     queryFn: () => CartUsecase.getCartItems(),
   });
   const cartItems = data?.items || [];
-  // useEffect(() => {
-  //   cartItems.forEach((item: CartItemEntity) => {
-  //     setSubTotals((prev) => ({
-  //       ...prev,
-  //       [item.VariantID]: item.Quantity * item.Price,
-  //     }));
-  //   });
-  // }, [cartItems, selectedIds]);
 
   useEffect(() => {
-    if (cartItems.length > 0 && !isInitialized) {
-      const allVariantIds = cartItems.map(
-        (item: CartItemEntity) => item.VariantID,
+    if (cartItems.length > 0) {
+      const newVariants = cartItems.filter(
+        (item: CartItemEntity) => !initializedVariantsRef.current.has(item.VariantID)
       );
-      setSelectedIds(allVariantIds);
-      setIsInitialized(true);
+
+      if (newVariants.length > 0) {
+        const newVariantIds = newVariants.map((item: CartItemEntity) => item.VariantID);
+        
+        setSelectedIds((prev) => [...prev, ...newVariantIds]);
+        
+        newVariantIds.forEach((id) => initializedVariantsRef.current.add(id));
+      }
     }
-  }, [cartItems, isInitialized]);
+  }, [cartItems]);
 
   // UI khi đang tải
   if (isLoading) {
@@ -78,8 +76,11 @@ export default function CartPage() {
       </div>
     );
   }
-  const grandTotal = selectedIds.reduce((sum, variantId) => {
-    return sum + (subTotals[variantId] || 0);
+  const grandTotal = cartItems.reduce((sum, item) => {
+    if (selectedIds.includes(item.VariantID)) {
+      return sum + (subTotals[item.VariantID] || 0);
+    }
+    return sum;
   }, 0);
   const handleUpdateSubTotal = (VariantId: number, TotalAmount: number) => {
     setSubTotals((prev) => ({

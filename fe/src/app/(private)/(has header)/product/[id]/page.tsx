@@ -3,16 +3,20 @@ import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
 import { Variant } from "@/features/products/entities/product.entity";
 import { ProductUsecase } from "@/features/products/usecase/products.usecase";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import Quantity from "@/components/quantity";
 import { useSession } from "next-auth/react";
 
 export default function Page() {
-  const { data: sessions, update } = useSession();
-  let currentQuantity = sessions?.user.cartQuantity;
+  const { data: session, update } = useSession();
+  const cartQuantityRef = useRef(session?.user?.cartQuantity || 0);
+  useEffect(() => {
+    cartQuantityRef.current = session?.user?.cartQuantity || 0;
+  }, [session?.user?.cartQuantity]);
   const params = useParams();
+  const router = useRouter();
   const productID = parseInt(params.id as string, 10);
   const { data, isLoading, isError, isSuccess } = useQuery({
     queryKey: ["product_by_id", productID],
@@ -32,9 +36,6 @@ export default function Page() {
   const addToCartMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
       return CartUsecase.addToCart(payload); // Trả kết quả về cho onSuccess xử lý
-    },
-    onSuccess: async () => {
-      await update({ cartQuanity: Number(currentQuantity) + Number(quantity) });
     },
   });
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -114,14 +115,17 @@ export default function Page() {
         VariantID: activeVariant.VariantID,
         Quantity: qty,
       })
-      .then((res) => {
+      .then(async (res) => {
         if (!res.success) {
           throw new Error(res.message || "Lỗi khi thêm vào giỏ hàng");
         }
 
+        const realCartQuantity = await CartUsecase.getCartQuantity();
+        await update({ cartQuantity: realCartQuantity });
+
         return res;
       });
-    await update({ cartQuantity: Number(currentQuantity) + qty });
+
     toast.promise(addToCartPromise, {
       loading: "Adding to Cart...",
       success: (data) => {
@@ -131,6 +135,34 @@ export default function Page() {
         return err.message;
       },
     });
+  };
+
+  const handleBuyNow = () => {
+    if (!activeVariant) {
+      toast.error("Choose a variant");
+      return;
+    }
+
+    const qty = Number(quantity);
+
+    if (isNaN(qty) || qty < 1) {
+      setQuantity(1); // Ép về 1
+      return;
+    }
+
+    const buyNowItem = {
+      VariantID: activeVariant.VariantID,
+      Quantity: qty,
+      Price: activeVariant.Price,
+      Name: data.Name,
+      Color: activeVariant.Color,
+      MainImage: activeVariant.MainImage,
+      Stock: activeVariant.Stock,
+      CartItemID: -1, // Not in cart
+    };
+
+    sessionStorage.setItem("buy_now_session", JSON.stringify([buyNowItem]));
+    router.push("/checkout");
   };
 
   return (
@@ -242,7 +274,10 @@ export default function Page() {
             >
               ADD TO CART
             </button>
-            <button className="flex-1 cursor-pointer bg-[#3B9AB8] text-white px-8 py-4 rounded-lg font-bold text-xl hover:bg-[#2f7a93] transition-all">
+            <button
+              onClick={handleBuyNow}
+              className="flex-1 cursor-pointer bg-[#3B9AB8] text-white px-8 py-4 rounded-lg font-bold text-xl hover:bg-[#2f7a93] transition-all"
+            >
               BUY NOW
             </button>
           </div>

@@ -1,5 +1,8 @@
-const { neon } = require("@neondatabase/serverless");
-const { Pool } = require("@neondatabase/serverless");
+const { neon, Pool, neonConfig } = require("@neondatabase/serverless");
+const ws = require("ws");
+
+neonConfig.webSocketConstructor = ws;
+
 const sql = neon(process.env.DATABASE_URL);
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const getCart = async (req, res) => {
@@ -230,7 +233,16 @@ const deleteCartItem = async (req, res) => {
 const placeOrder = async (req, res) => {
   try {
     const userId = req.userId;
-    const { name, phone, address, shipping, payment, total } = req.body;
+    const {
+      name,
+      phone,
+      address,
+      shipping,
+      payment,
+      total,
+      variantIds,
+      buyNowItems,
+    } = req.body;
 
     if (!name || !phone || !address || !shipping || !payment) {
       return res.status(400).json({
@@ -239,6 +251,9 @@ const placeOrder = async (req, res) => {
       });
     }
 
+    // Xác định chế độ checkout
+    const isBuyNow = Array.isArray(buyNowItems) && buyNowItems.length > 0;
+
     // 1. Mở một kết nối (Client) chuyên dụng từ Pool để giữ Transaction
     const client = await pool.connect();
 
@@ -246,37 +261,81 @@ const placeOrder = async (req, res) => {
       // BẮT ĐẦU TRANSACTION
       await client.query("BEGIN");
 
-      // 2. Lấy giỏ hàng & Kiểm tra tồn kho
-      const cartRes = await client.query(
-        `SELECT "CartID" FROM "cart" WHERE "UserID" = $1`,
-        [userId],
-      );
-      if (cartRes.rows.length === 0) {
-        throw new Error("EMPTY_CART"); // Ném lỗi để nhảy xuống catch bên dưới
-      }
-      const cartId = cartRes.rows[0].CartID;
+      let orderItems = []; // Danh sách items sẽ được đưa vào order
 
-      const itemsRes = await client.query(
-        `
-        SELECT ci."VariantID", ci."Quantity", pv."Price", pv."Stock", pv."Color"
-        FROM "cart_items" ci
-        JOIN "product_variants" pv ON ci."VariantID" = pv."VariantID"
-        WHERE ci."CartID" = $1
-      `,
-        [cartId],
-      );
-
-      const cartItems = itemsRes.rows;
-      if (cartItems.length === 0) throw new Error("EMPTY_CART");
-
-      // Kiểm tra tồn kho
-      for (const item of cartItems) {
-        if (item.Quantity > item.Stock) {
-          throw new Error(`OUT_OF_STOCK_${item.Color}_${item.Stock}`);
+      if (isBuyNow) {
+        // === CHẾ ĐỘ MUA NGAY: Lấy thông tin từ buyNowItems, không cần giỏ hàng ===
+        for (const buyItem of buyNowItems) {
+          const variantRes = await client.query(
+            `SELECT "VariantID", "Price", "Stock", "Color" FROM "product_variants" WHERE "VariantID" = $1`,
+            [buyItem.VariantID],
+          );
+          if (variantRes.rows.length === 0) {
+            throw new Error(`VARIANT_NOT_FOUND_${buyItem.VariantID}`);
+          }
+          const variant = variantRes.rows[0];
+          if (buyItem.Quantity > variant.Stock) {
+            throw new Error(`OUT_OF_STOCK_${variant.Color}_${variant.Stock}`);
+          }
+          orderItems.push({
+            VariantID: variant.VariantID,
+            Quantity: buyItem.Quantity,
+            Price: variant.Price,
+          });
         }
+      } else {
+        // === CHẾ ĐỘ GIỎ HÀNG: Lấy items từ cart ===
+        const cartRes = await client.query(
+          `SELECT "CartID" FROM "cart" WHERE "UserID" = $1`,
+          [userId],
+        );
+        if (cartRes.rows.length === 0) {
+          throw new Error("EMPTY_CART");
+        }
+        const cartId = cartRes.rows[0].CartID;
+
+        // Nếu có variantIds, chỉ lấy những item được chọn; nếu không lấy tất cả
+        let itemsQuery = `
+          SELECT ci."VariantID", ci."Quantity", pv."Price", pv."Stock", pv."Color"
+          FROM "cart_items" ci
+          JOIN "product_variants" pv ON ci."VariantID" = pv."VariantID"
+          WHERE ci."CartID" = $1
+        `;
+        const queryParams = [cartId];
+
+        if (Array.isArray(variantIds) && variantIds.length > 0) {
+          itemsQuery += ` AND ci."VariantID" = ANY($2)`;
+          queryParams.push(variantIds);
+        }
+
+        const itemsRes = await client.query(itemsQuery, queryParams);
+        const cartItems = itemsRes.rows;
+        if (cartItems.length === 0) throw new Error("EMPTY_CART");
+
+        // Kiểm tra tồn kho
+        for (const item of cartItems) {
+          if (item.Quantity > item.Stock) {
+            throw new Error(`OUT_OF_STOCK_${item.Color}_${item.Stock}`);
+          }
+        }
+
+        orderItems = cartItems.map((item) => ({
+          VariantID: item.VariantID,
+          Quantity: item.Quantity,
+          Price: item.Price,
+        }));
+
+        // Xóa các cart_items đã checkout (chỉ xóa những item được chọn)
+        // Thực hiện sau khi tạo order (bước dưới)
+        // Lưu cartId để dùng ở bước xóa
+        orderItems._cartId = cartId;
+        orderItems._variantIds =
+          Array.isArray(variantIds) && variantIds.length > 0
+            ? variantIds
+            : null;
       }
 
-      // 3. Tạo Đơn hàng mới (Dùng $1, $2... hoàn toàn chống SQL Injection)
+      // 3. Tạo Đơn hàng mới
       const orderRes = await client.query(
         `
         INSERT INTO "order" (
@@ -295,7 +354,7 @@ const placeOrder = async (req, res) => {
       const orderId = orderRes.rows[0].OrderID;
 
       // 4. Chuyển items sang Order Items & Trừ Tồn Kho
-      for (const item of cartItems) {
+      for (const item of orderItems) {
         await client.query(
           `
           INSERT INTO "order_items" ("OrderID", "VariantID", "Quantity", "Price")
@@ -314,10 +373,21 @@ const placeOrder = async (req, res) => {
         );
       }
 
-      // 5. Xóa Giỏ hàng
-      await client.query(`DELETE FROM "cart_items" WHERE "CartID" = $1`, [
-        cartId,
-      ]);
+      // 5. Xóa Giỏ hàng (chỉ khi checkout từ giỏ hàng, không xóa khi Buy Now)
+      if (!isBuyNow && orderItems._cartId) {
+        if (orderItems._variantIds) {
+          // Chỉ xóa những item đã checkout
+          await client.query(
+            `DELETE FROM "cart_items" WHERE "CartID" = $1 AND "VariantID" = ANY($2)`,
+            [orderItems._cartId, orderItems._variantIds],
+          );
+        } else {
+          // Xóa toàn bộ (backward compatible)
+          await client.query(`DELETE FROM "cart_items" WHERE "CartID" = $1`, [
+            orderItems._cartId,
+          ]);
+        }
+      }
 
       // CHỐT GIAO DỊCH LƯU VÀO DATABASE
       await client.query("COMMIT");
@@ -343,6 +413,12 @@ const placeOrder = async (req, res) => {
           message: `Product ${parts[3]} only has ${parts[4]} unit.`,
         });
       }
+      if (dbError.message.startsWith("VARIANT_NOT_FOUND")) {
+        return res.status(404).json({
+          success: false,
+          message: "Product variant not found.",
+        });
+      }
 
       // Nếu là lỗi cú pháp SQL khác
       throw dbError;
@@ -357,10 +433,29 @@ const placeOrder = async (req, res) => {
       .json({ success: false, message: "Lỗi máy chủ nội bộ." });
   }
 };
+
+const getCartQuantity = async (req, res) => {
+  const userId = req.userId;
+  try {
+    const cartRecord = await sql`
+      SELECT "CartID" FROM "cart" WHERE "UserID" = ${userId}
+    `;
+    const cartItems = await sql`
+      SELECT SUM("Quantity") as total FROM "cart_items" WHERE "CartID" = ${cartRecord[0].CartID}
+    `;
+    return res
+      .status(200)
+      .json({ success: true, quantity: cartItems[0].total || 0 });
+  } catch (error) {
+    console.error("Error fetching cart quantity:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 module.exports = {
   getCart,
   addToCart,
   changeItemQuantity,
   deleteCartItem,
   placeOrder,
+  getCartQuantity,
 };
