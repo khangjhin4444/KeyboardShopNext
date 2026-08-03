@@ -220,9 +220,14 @@ const deleteCartItem = async (req, res) => {
       FROM "cart_items"
       WHERE "CartID" = ${cartId} AND "VariantID" = ${VariantID}
     `;
+    const newQuantity =
+      await sql`SELECT COALESCE(SUM("Quantity"), 0) AS "TotalQuantity"
+                            FROM "cart_items"
+                            WHERE "CartID" = ${cartId};`;
     return res.status(200).json({
       success: true,
       message: "Deleted Item",
+      newQuantity: newQuantity[0].TotalQuantity,
     });
   } catch (error) {
     console.log(error);
