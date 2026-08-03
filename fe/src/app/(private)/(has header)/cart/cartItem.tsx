@@ -58,16 +58,16 @@ export default function CartItem({
     // Chain vào queue: lần gọi mới luôn đợi lần trước xong
     updateQueueRef.current = updateQueueRef.current.then(async () => {
       try {
-        await changeItemQuantityMutation.mutateAsync({
-          VariantID: item.VariantID,
-          Quantity: newQuantity,
-        });
-
-        // Đọc giá trị từ server cho chính xác 100%
-        const realCartQuantity = await CartUsecase.getCartQuantity();
-        await update({
-          cartQuantity: realCartQuantity,
-        });
+        await changeItemQuantityMutation
+          .mutateAsync({
+            VariantID: item.VariantID,
+            Quantity: newQuantity,
+          })
+          .then(async (res) => {
+            await update({
+              cartQuantity: res.newQuantity,
+            });
+          });
       } catch (error) {
         console.error("Lỗi cập nhật số lượng:", error);
         // Rollback prevQuantity khi lỗi
@@ -80,15 +80,14 @@ export default function CartItem({
 
   const handleDeleteItem = async (VariantID: number) => {
     try {
-      await deleteCartItemMutation.mutateAsync({ VariantID });
+      await deleteCartItemMutation
+        .mutateAsync({ VariantID })
+        .then(async (res) => {
+          await update({
+            cartQuantity: res.newQuantity,
+          });
+        });
 
-      // Khi xóa item, lấy lại tổng số lượng thực tế từ backend
-      const realCartQuantity = await CartUsecase.getCartQuantity();
-      await update({
-        cartQuantity: realCartQuantity,
-      });
-
-      setQuantity(0);
       queryClient.invalidateQueries({ queryKey: ["cart-items"] });
     } catch (error) {
       console.error("Lỗi xóa item:", error);

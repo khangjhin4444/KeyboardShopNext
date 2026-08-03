@@ -119,9 +119,9 @@ export default function Page() {
         if (!res.success) {
           throw new Error(res.message || "Lỗi khi thêm vào giỏ hàng");
         }
+        console.log("Item added to cart:", res);
 
-        const realCartQuantity = await CartUsecase.getCartQuantity();
-        await update({ cartQuantity: realCartQuantity });
+        await update({ cartQuantity: res.newQuantity });
 
         return res;
       });
