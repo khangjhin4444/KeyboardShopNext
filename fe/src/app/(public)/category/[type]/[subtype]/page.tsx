@@ -10,6 +10,8 @@ export default function Page({
 }) {
   const resolvedParams = use(params);
   const { type, subtype } = resolvedParams;
+  console.log(subtype);
   const decodedSubtype = decodeURIComponent(subtype);
+  console.log(decodedSubtype);
   return <ProductList type={type} sub={decodedSubtype} />;
 }

@@ -19,6 +19,7 @@ import { ProductSkeleton } from "./product_skeletion";
 import Sorting from "./sorting";
 import { router } from "next/client";
 import { div } from "motion/react-client";
+import { ProductCard } from "../../home/_components/product_card";
 export default function ProductGrid({
   type,
   sub,
@@ -32,7 +33,6 @@ export default function ProductGrid({
     triggerOnce: true, // Chỉ kích hoạt 1 lần duy nhất khi nhìn thấy
     rootMargin: "300px 0px", // Khách cuộn gần tới nơi cách 200px là đã âm thầm load trước
   });
-  const router = useRouter();
 
   const {
     data,
@@ -49,7 +49,7 @@ export default function ProductGrid({
         type,
         page: pageParam,
         sort,
-        sub: sub,
+        sub: sub == "75" ? "75%" : sub,
       }),
 
     initialPageParam: 1,
@@ -82,37 +82,8 @@ export default function ProductGrid({
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-10 ">
                 {data?.pages.map((page, index) => (
                   <React.Fragment key={index}>
-                    {page.map((product) => (
-                      <Card
-                        key={product.ProductID}
-                        className="relative mx-auto w-full  max-w-sm pt-0"
-                      >
-                        <div
-                          className="absolute inset-0 z-30 aspect-square cursor-pointer"
-                          onClick={() => {
-                            router.push(`/product/${product.ProductID}`);
-                          }}
-                        />
-                        <img
-                          src={product.MainImage}
-                          alt="Product Image"
-                          className="relative z-20 aspect-square w-full object-cover "
-                        />
-                        <CardHeader>
-                          <CardTitle className="h-12">{product.Name}</CardTitle>
-                          <CardDescription className="text-center font-semibold text-[#7c5c2c]">
-                            Price: {formatter.format(product.Price)} VND
-                          </CardDescription>
-                          <Button
-                            className="cursor-pointer w-full bg-[#8CC0EB] hover:bg-[#BFDDF0] mt-5"
-                            onClick={() =>
-                              router.push(`/product/${product.ProductID}`)
-                            }
-                          >
-                            View More
-                          </Button>
-                        </CardHeader>
-                      </Card>
+                    {page.map((product: any) => (
+                      <ProductCard key={product.ProductID} product={product} />
                     ))}
                   </React.Fragment>
                 ))}

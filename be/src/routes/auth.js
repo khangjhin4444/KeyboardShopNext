@@ -180,12 +180,10 @@ router.post("/logout", async (req, res) => {
       DELETE FROM "refresh_tokens" WHERE "token" = ${refreshToken}
     `;
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Đăng xuất thành công, token đã bị thu hồi",
-      });
+    res.status(200).json({
+      success: true,
+      message: "Đăng xuất thành công, token đã bị thu hồi",
+    });
   } catch (error) {
     console.log("Logout error:", error);
     res.status(500).json({ success: false, message: "Lỗi server" });

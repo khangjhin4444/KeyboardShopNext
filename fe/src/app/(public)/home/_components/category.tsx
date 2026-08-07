@@ -48,7 +48,7 @@ export default function Category() {
                 className="text-lg"
                 onClick={() =>
                   router.push(
-                    `/category/${item.type === "Keyboard Kit" ? "KeyboardKit" : item.type}/${opt}`,
+                    `/category/${item.type === "Keyboard Kit" ? "KeyboardKit" : item.type}/${opt === "75% or less" ? "75" : opt}`,
                   )
                 }
               >
