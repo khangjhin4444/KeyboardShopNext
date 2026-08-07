@@ -1,12 +1,14 @@
 import {
   CancelOrderResponseEntity,
   OrdersResponseEntity,
+  ProceedOrderResponseEntity,
 } from "@/shared/entities/orders.entity";
 import {
   AddProductResponseModel,
   CancelOrderResponseModel,
   DeleteProductResponseModel,
   OrdersResponseModel,
+  ProceedOrderResponseModel,
   ProductDetailResponseModel,
   UpdateProductVariantAdminResponseModel,
 } from "../models/admin.response";
@@ -58,6 +60,14 @@ export function convertToOrdersResponseEntity(
 export function convertToCancelOrderResponseEntity(
   responseModel: CancelOrderResponseModel,
 ): CancelOrderResponseEntity {
+  return {
+    success: responseModel.success,
+    message: responseModel.message,
+  };
+}
+export function convertToProceedOrderResponseEntity(
+  responseModel: ProceedOrderResponseModel,
+): ProceedOrderResponseEntity {
   return {
     success: responseModel.success,
     message: responseModel.message,

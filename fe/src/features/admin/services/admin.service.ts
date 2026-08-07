@@ -5,6 +5,7 @@ import {
   convertToCancelOrderResponseEntity,
   convertToDeleteProductEntity,
   convertToOrdersResponseEntity,
+  convertToProceedOrderResponseEntity,
   convertToUpdateProductVariantAdminEntity,
   DeleteProductEntity,
   ProductDetailEntity,
@@ -15,6 +16,7 @@ import { convertToProductDetailEntity } from "../entities/admin.entity";
 import {
   CancelOrderResponseEntity,
   OrdersResponseEntity,
+  ProceedOrderResponseEntity,
 } from "@/shared/entities/orders.entity";
 
 type GetProductDetail = ({
@@ -70,6 +72,10 @@ type GetAdminOrders = (status: string) => Promise<OrdersResponseEntity>;
 
 type CancelAdminOrder = (orderID: number) => Promise<CancelOrderResponseEntity>;
 
+type ProceedAdminOrder = (
+  orderID: number,
+) => Promise<ProceedOrderResponseEntity>;
+
 type AdminServiceType = {
   getProductDetail: GetProductDetail;
   deleteProductAdmin: DeleteProductAdmin;
@@ -77,6 +83,7 @@ type AdminServiceType = {
   addProduct: AddProductAdmin;
   getAdminOrders: GetAdminOrders;
   cancelAdminOrder: CancelAdminOrder;
+  proceedAdminOrder: ProceedAdminOrder;
 };
 
 export const AdminService: AdminServiceType = {
@@ -195,6 +202,26 @@ export const AdminService: AdminServiceType = {
         },
       );
       return convertToCancelOrderResponseEntity(response);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
+  proceedAdminOrder: async function (orderID: number) {
+    try {
+      const response = await fetchWithAuth(
+        `${API_URL}/api/orders/admin/proceed`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderID,
+          }),
+        },
+      );
+      return convertToProceedOrderResponseEntity(response);
     } catch (error) {
       console.log(error);
       throw error;

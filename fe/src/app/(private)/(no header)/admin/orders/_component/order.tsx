@@ -25,6 +25,20 @@ export default function Order({ order }: { order: OrderEntity }) {
       cancelOrderMutation.mutate(orderID);
     }
   };
+
+  const proceedOrderMutation = useMutation({
+    mutationFn: (orderID: number) => AdminUsecase.proceedAdminOrder(orderID),
+    onSuccess: () => {
+      toast.success("Proceeded Order!");
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    },
+    onError: () => {
+      toast.error("Failed to proceed order.");
+    },
+  });
+  const handleProceedOrder = (orderID: number) => {
+    proceedOrderMutation.mutate(orderID);
+  };
   return (
     <Card key={order.OrderID} className="flex flex-col lg:flex-row p-5 gap-8">
       {/* CỘT TRÁI: DANH SÁCH SẢN PHẨM TRONG ĐƠN */}
@@ -124,13 +138,24 @@ export default function Order({ order }: { order: OrderEntity }) {
         </h3>
 
         {order.Status === "Pending" && (
-          <button
-            onClick={() => handleCancelOrder(order.OrderID)}
-            disabled={cancelOrderMutation.isPending}
-            className="mt-6 px-4 py-2 border-2 border-red-500 text-red-500 font-bold rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
-          >
-            {cancelOrderMutation.isPending ? "CANCELING..." : "CANCEL ORDER"}
-          </button>
+          <>
+            <button
+              onClick={() => handleCancelOrder(order.OrderID)}
+              disabled={cancelOrderMutation.isPending}
+              className="w-full mt-6 px-4 py-2 border-2 border-red-500 text-red-500 font-bold rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              {cancelOrderMutation.isPending ? "CANCELING..." : "CANCEL ORDER"}
+            </button>
+            <button
+              onClick={() => handleProceedOrder(order.OrderID)}
+              disabled={proceedOrderMutation.isPending}
+              className="w-full mt-6 px-4 py-2 border-2 border-green-500 text-green-500 font-bold rounded-md hover:bg-red-50 transition-colors disabled:opacity-50"
+            >
+              {proceedOrderMutation.isPending
+                ? "PROCEEDING..."
+                : "PROCEED ORDER"}
+            </button>
+          </>
         )}
       </div>
     </Card>

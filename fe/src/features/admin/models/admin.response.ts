@@ -55,3 +55,8 @@ export interface CancelOrderResponseModel {
   success: boolean;
   message: string;
 }
+
+export interface ProceedOrderResponseModel {
+  success: boolean;
+  message: string;
+}

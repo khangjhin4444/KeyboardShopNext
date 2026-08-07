@@ -31,3 +31,8 @@ export interface CancelOrderResponseEntity {
   success: boolean;
   message: string;
 }
+
+export interface ProceedOrderResponseEntity {
+  success: boolean;
+  message: string;
+}

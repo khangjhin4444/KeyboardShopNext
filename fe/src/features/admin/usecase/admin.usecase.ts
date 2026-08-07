@@ -42,4 +42,7 @@ export const AdminUsecase = {
   cancelAdminOrder: (orderID: number) => {
     return AdminService.cancelAdminOrder(orderID);
   },
+  proceedAdminOrder: (orderID: number) => {
+    return AdminService.proceedAdminOrder(orderID);
+  },
 };
