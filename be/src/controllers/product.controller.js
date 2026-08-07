@@ -213,7 +213,7 @@ const getRelevantProduct = async (req, res) => {
     res.status(200).json({ success: true, data: finalProducts });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Lỗi máy chủ" });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 

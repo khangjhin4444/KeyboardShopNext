@@ -123,7 +123,7 @@ const addToCart = async (req, res) => {
     console.error("Lỗi khi thêm vào giỏ hàng:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Lỗi máy chủ nội bộ." });
+      .json({ success: false, message: "Server Error nội bộ." });
   }
 };
 const changeItemQuantity = async (req, res) => {
@@ -185,7 +185,7 @@ const changeItemQuantity = async (req, res) => {
     console.error("Lỗi khi thêm vào giỏ hàng:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Lỗi máy chủ nội bộ." });
+      .json({ success: false, message: "Server Error nội bộ." });
   }
 };
 
@@ -435,7 +435,7 @@ const placeOrder = async (req, res) => {
     console.error("Lỗi hệ thống thanh toán:", error);
     return res
       .status(500)
-      .json({ success: false, message: "Lỗi máy chủ nội bộ." });
+      .json({ success: false, message: "Server Error nội bộ." });
   }
 };
 

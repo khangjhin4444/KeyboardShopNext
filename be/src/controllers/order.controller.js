@@ -48,7 +48,6 @@ const cancelOrder = async (req, res) => {
   try {
     const userID = req.userId; // Lấy từ token đăng nhập
     const { orderID } = req.body; // Hoặc req.body tùy cách bạn thiết kế route
-    console.log(userID, orderID);
     const result = await sql`
       UPDATE "order"
       SET "Status" = 'Canceled'
@@ -135,7 +134,7 @@ const getAdminOrders = async (req, res) => {
 
 const cancelAdminOrder = async (req, res) => {
   try {
-    const { orderID } = req.body; // Hoặc req.body tùy cách bạn thiết kế route
+    const { orderID } = req.body;
 
     const result = await sql`
       UPDATE "order"
@@ -148,18 +147,52 @@ const cancelAdminOrder = async (req, res) => {
     if (result.rowCount === 0) {
       return res.status(400).json({
         success: false,
-        message:
-          "Không thể hủy đơn hàng này. Đơn hàng không tồn tại hoặc đã vượt qua giai đoạn chờ xử lý.",
+        message: "Cannot cancel order!",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Đã hủy đơn hàng thành công!",
+      message: "Canceled order!",
     });
   } catch (error) {
-    console.error("Lỗi khi hủy đơn hàng:", error);
-    return res.status(500).json({ success: false, message: "Lỗi máy chủ." });
+    console.error("Error when cancel order:", error);
+    return res.status(500).json({ success: false, message: "Server Error." });
   }
 };
-module.exports = { getOrders, cancelOrder, getAdminOrders, cancelAdminOrder };
+
+const proceedAdminOrder = async (req, res) => {
+  try {
+    const { orderID } = req.body;
+
+    const result = await sql`
+      UPDATE "order"
+      SET "Status" = 'Delivered'
+      WHERE "OrderID" = ${orderID} 
+        AND "Status" = 'Pending'
+      RETURNING "OrderID";
+    `;
+    console.log(result);
+    if (result.rowCount === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot Proceed order!",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order Proceeded!",
+    });
+  } catch (error) {
+    console.error("Error when proceed order :", error);
+    return res.status(500).json({ success: false, message: "Server Error." });
+  }
+};
+module.exports = {
+  getOrders,
+  cancelOrder,
+  getAdminOrders,
+  cancelAdminOrder,
+  proceedAdminOrder,
+};
