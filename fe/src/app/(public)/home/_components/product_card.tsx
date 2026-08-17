@@ -45,7 +45,7 @@ export function ProductCard({ product }: { product: ProductType }) {
   };
 
   return (
-    <Card className="relative mx-auto transition-all duration-300 hover:scale-[1.03] hover:shadow-xl w-full max-w-sm pt-0 flex flex-col justify-between overflow-hidden">
+    <Card className="relative mx-auto transition-all duration-300 hover:scale-[1.03] hover:shadow-xl w-full max-w-sm pt-0 flex flex-col justify-between overflow-hidden border-2 border-gray-300 select-none">
       <div
         className="relative z-10 aspect-square cursor-pointer bg-gray-50"
         onClick={navigateToDetail}
