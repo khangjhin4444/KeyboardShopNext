@@ -8,7 +8,8 @@ export default function Layout({
   return (
     <TooltipProvider>
       <Header />
-      {children}
+      <div className="flex-1">{children}</div>
+
       <Footer />
     </TooltipProvider>
   );
