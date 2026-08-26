@@ -4,17 +4,14 @@ import { Variant } from "@/features/products/entities/product.entity";
 import { ProductUsecase } from "@/features/products/usecase/products.usecase";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Quantity from "@/components/quantity";
 import { useSession } from "next-auth/react";
+import { pre } from "framer-motion/client";
 
 export default function Page() {
   const { data: session, update } = useSession();
-  const cartQuantityRef = useRef(session?.user?.cartQuantity || 0);
-  useEffect(() => {
-    cartQuantityRef.current = session?.user?.cartQuantity || 0;
-  }, [session?.user?.cartQuantity]);
   const params = useParams();
   const router = useRouter();
   const productID = parseInt(params.id as string, 10);
@@ -33,9 +30,25 @@ export default function Page() {
   const [mainImage, setMainImage] = useState<string>("temp");
   const [quantity, setQuantity] = useState<number | string>(1);
   const [zoom, setZoom] = useState({ show: false, x: 0, y: 0 });
+
   const addToCartMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
       return CartUsecase.addToCart(payload); // Trả kết quả về cho onSuccess xử lý
+    },
+    onMutate: async (payload) => {
+      const previousCartQuantity = session?.user.cartQuantity || 0;
+      const optimisticQuantiy = Number(previousCartQuantity) + payload.Quantity;
+      await update({ cartQuantity: optimisticQuantiy });
+      return { previousCartQuantity };
+    },
+    onError: async (err, payload, contex) => {
+      if (contex?.previousCartQuantity !== undefined) {
+        await update({ cartQuantity: contex.previousCartQuantity });
+      }
+      throw new Error(err.message || "Error when add to cart");
+    },
+    onSuccess: async (data) => {
+      await update({ cartQuantity: data.newQuantity });
     },
   });
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -110,21 +123,10 @@ export default function Page() {
       setQuantity(1); // Ép về 1
       return;
     }
-    const addToCartPromise = addToCartMutation
-      .mutateAsync({
-        VariantID: activeVariant.VariantID,
-        Quantity: qty,
-      })
-      .then(async (res) => {
-        if (!res.success) {
-          throw new Error(res.message || "Lỗi khi thêm vào giỏ hàng");
-        }
-        console.log("Item added to cart:", res);
-
-        await update({ cartQuantity: res.newQuantity });
-
-        return res;
-      });
+    const addToCartPromise = addToCartMutation.mutateAsync({
+      VariantID: activeVariant.VariantID,
+      Quantity: qty,
+    });
 
     toast.promise(addToCartPromise, {
       loading: "Adding to Cart...",
