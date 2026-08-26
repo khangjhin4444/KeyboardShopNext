@@ -12,12 +12,10 @@ export default function CartItem({
   checkboxList,
   onCheckboxChange,
   item,
-  onUpdateSubTotal,
 }: {
   checkboxList: number[];
   onCheckboxChange: (variantId: number) => void;
   item: CartItemEntity;
-  onUpdateSubTotal: (VariantID: number, TotalAmount: number) => void;
 }) {
   const { data: session, update } = useSession();
   const queryClient = useQueryClient();
@@ -38,6 +36,41 @@ export default function CartItem({
   const changeItemQuantityMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
       return CartUsecase.changeItemQuantity(payload);
+    },
+    onMutate: async (payload) => {
+      const previousCart = queryClient.getQueryData(["cart-items"]);
+      queryClient.setQueryData(["cart-items"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          items: oldData.items.map((i: CartItemEntity) =>
+            i.VariantID === payload.VariantID
+              ? { ...i, Quantity: payload.Quantity }
+              : i,
+          ),
+        };
+      });
+      const previousCartQuantity = cartQuantityRef.current;
+      const oldQuantity = Number(prevQuantity.current);
+      await update({
+        cartQuantity: previousCartQuantity - oldQuantity + payload.Quantity,
+      });
+      return { previousCartQuantity, oldQuantity, previousCart };
+    },
+    onError: async (err, payload, context) => {
+      if (context) {
+        queryClient.setQueryData(["cart-items"], context.previousCart);
+        await update({ cartQuantity: context.previousCartQuantity });
+        prevQuantity.current = context.oldQuantity;
+        setQuantity(context.oldQuantity); // Khôi phục UI input
+      }
+      throw new Error("Error when changing quantity");
+    },
+    onSuccess: async (data) => {
+      await update({ cartQuantity: data.newQuantity });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart-items"] });
     },
   });
 
@@ -93,12 +126,6 @@ export default function CartItem({
       console.error("Lỗi xóa item:", error);
     }
   };
-
-  useEffect(() => {
-    if (quantity !== "") {
-      onUpdateSubTotal(item.VariantID, Number(quantity) * item.Price);
-    }
-  }, [quantity]);
 
   // --- RENDER ---
   return (

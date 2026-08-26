@@ -12,7 +12,6 @@ import { toast } from "sonner";
 export default function CartPage() {
   const router = useRouter();
   const formatter = new Intl.NumberFormat("vi-VN");
-  const [subTotals, setSubTotals] = useState<Record<number, number>>({});
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const initializedVariantsRef = useRef(new Set<number>());
 
@@ -25,14 +24,17 @@ export default function CartPage() {
   useEffect(() => {
     if (cartItems.length > 0) {
       const newVariants = cartItems.filter(
-        (item: CartItemEntity) => !initializedVariantsRef.current.has(item.VariantID)
+        (item: CartItemEntity) =>
+          !initializedVariantsRef.current.has(item.VariantID),
       );
 
       if (newVariants.length > 0) {
-        const newVariantIds = newVariants.map((item: CartItemEntity) => item.VariantID);
-        
+        const newVariantIds = newVariants.map(
+          (item: CartItemEntity) => item.VariantID,
+        );
+
         setSelectedIds((prev) => [...prev, ...newVariantIds]);
-        
+
         newVariantIds.forEach((id) => initializedVariantsRef.current.add(id));
       }
     }
@@ -78,16 +80,10 @@ export default function CartPage() {
   }
   const grandTotal = cartItems.reduce((sum, item) => {
     if (selectedIds.includes(item.VariantID)) {
-      return sum + (subTotals[item.VariantID] || 0);
+      return sum + item.Quantity * item.Price;
     }
     return sum;
   }, 0);
-  const handleUpdateSubTotal = (VariantId: number, TotalAmount: number) => {
-    setSubTotals((prev) => ({
-      ...prev,
-      [VariantId]: TotalAmount, // Cập nhật hoặc thêm mới số tiền của item này
-    }));
-  };
   return (
     <div className="py-10 px-35 relative">
       <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
@@ -104,7 +100,6 @@ export default function CartPage() {
               onCheckboxChange={handleCheckboxChange}
               item={item}
               key={item.CartItemID}
-              onUpdateSubTotal={handleUpdateSubTotal}
             />
           ))}
           <div className="fixed z-100 bottom-10 right-20 flex flex-col gap-3 justify-center mt-8 border-2 bg-white p-5 rounded-4xl">
