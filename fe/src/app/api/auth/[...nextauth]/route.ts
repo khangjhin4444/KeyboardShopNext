@@ -31,7 +31,6 @@ export const authOptions: NextAuthOptions = {
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
 
-            // Thêm mốc thời gian hết hạn của Access Token (15 phút)
             accessTokenExpires: Date.now() + 15 * 60 * 1000,
           };
         }
@@ -55,7 +54,6 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google" && profile) {
         try {
           const backendUrl = process.env.NEXT_PUBLIC_BASE_URL;
-          // Gọi sang Express để lấy thông tin (tạo mới hoặc lấy cũ)
           const res = await fetch(`${backendUrl}/api/auth/google`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -71,15 +69,9 @@ export const authOptions: NextAuthOptions = {
             return {
               ...token,
               id: data.user.id,
-              // username: data.user.username,
-              // role: data.user.role, // "user" đã được gán từ Express
               accessToken: data.accessToken,
               refreshToken: data.refreshToken,
               accessTokenExpires: Date.now() + 15 * 60 * 1000,
-              // cartQuantity: data.user.cartQuantity,
-              // Address: data.user.Address,
-              // Name: data.user.Name,
-              // Phone: data.user.Phone,
             };
           }
         } catch (error) {
@@ -87,15 +79,6 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // if (trigger === "update" && session) {
-      //   // Cập nhật các giá trị mới vào token
-      //   if (session.cartQuantity !== undefined)
-      //     token.cartQuantity = session.cartQuantity;
-      //   if (session.Name !== undefined) token.Name = session.Name;
-      //   if (session.Phone !== undefined) token.Phone = session.Phone;
-      //   if (session.Address !== undefined) token.Address = session.Address;
-      // }
-      // 2. Token vẫn còn hạn (cộng thêm 1 chút thời gian bù trừ mạng)
       if (Date.now() < (token.accessTokenExpires as number) - 10000) {
         return token;
       }
