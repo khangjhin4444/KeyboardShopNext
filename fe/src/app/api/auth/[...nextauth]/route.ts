@@ -28,14 +28,9 @@ export const authOptions: NextAuthOptions = {
         if (res.ok && data.success) {
           return {
             id: data.user.id,
-            username: data.user.username,
-            role: data.user.role,
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
-            cartQuantity: data.user.cartQuantity,
-            Address: data.user.Address,
-            Name: data.user.Name,
-            Phone: data.user.Phone,
+
             // Thêm mốc thời gian hết hạn của Access Token (15 phút)
             accessTokenExpires: Date.now() + 15 * 60 * 1000,
           };
@@ -51,15 +46,9 @@ export const authOptions: NextAuthOptions = {
         return {
           ...token,
           id: user.id,
-          username: user.username,
-          role: user.role,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
           accessTokenExpires: user.accessTokenExpires,
-          cartQuantity: user.cartQuantity,
-          Address: user.Address,
-          Name: user.Name,
-          Phone: user.Phone,
         };
       }
 
@@ -82,15 +71,15 @@ export const authOptions: NextAuthOptions = {
             return {
               ...token,
               id: data.user.id,
-              username: data.user.username,
-              role: data.user.role, // "user" đã được gán từ Express
+              // username: data.user.username,
+              // role: data.user.role, // "user" đã được gán từ Express
               accessToken: data.accessToken,
               refreshToken: data.refreshToken,
               accessTokenExpires: Date.now() + 15 * 60 * 1000,
-              cartQuantity: data.user.cartQuantity,
-              Address: data.user.Address,
-              Name: data.user.Name,
-              Phone: data.user.Phone,
+              // cartQuantity: data.user.cartQuantity,
+              // Address: data.user.Address,
+              // Name: data.user.Name,
+              // Phone: data.user.Phone,
             };
           }
         } catch (error) {
@@ -98,14 +87,14 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      if (trigger === "update" && session) {
-        // Cập nhật các giá trị mới vào token
-        if (session.cartQuantity !== undefined)
-          token.cartQuantity = session.cartQuantity;
-        if (session.Name !== undefined) token.Name = session.Name;
-        if (session.Phone !== undefined) token.Phone = session.Phone;
-        if (session.Address !== undefined) token.Address = session.Address;
-      }
+      // if (trigger === "update" && session) {
+      //   // Cập nhật các giá trị mới vào token
+      //   if (session.cartQuantity !== undefined)
+      //     token.cartQuantity = session.cartQuantity;
+      //   if (session.Name !== undefined) token.Name = session.Name;
+      //   if (session.Phone !== undefined) token.Phone = session.Phone;
+      //   if (session.Address !== undefined) token.Address = session.Address;
+      // }
       // 2. Token vẫn còn hạn (cộng thêm 1 chút thời gian bù trừ mạng)
       if (Date.now() < (token.accessTokenExpires as number) - 10000) {
         return token;
@@ -142,12 +131,12 @@ export const authOptions: NextAuthOptions = {
       // Đẩy dữ liệu từ jwt ra session để Client (React) dùng được
       session.user = {
         id: token.id as string,
-        username: token.username as string,
-        role: token.role as string,
-        cartQuantity: token.cartQuantity as number,
-        Address: token.Address as string,
-        Phone: token.Phone as string,
-        Name: token.Name as string,
+        // username: token.username as string,
+        // role: token.role as string,
+        // cartQuantity: token.cartQuantity as number,
+        // Address: token.Address as string,
+        // Phone: token.Phone as string,
+        // Name: token.Name as string,
       };
       session.accessToken = token.accessToken as string;
       session.error = token.error as string;

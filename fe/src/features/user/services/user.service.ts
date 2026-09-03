@@ -1,7 +1,9 @@
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   convertToUserChangeInformationEntity,
+  convertToUserInformationEntity,
   UserChangeInformationResponseEntity,
+  UserInformationEntity,
 } from "../entities/user.entity";
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 type UserChangeInformation = ({
@@ -14,8 +16,11 @@ type UserChangeInformation = ({
   phone: string;
 }) => Promise<UserChangeInformationResponseEntity>;
 
+type UserInformation = () => Promise<UserInformationEntity>;
+
 type UserService = {
   userChangeInformation: UserChangeInformation;
+  getUserInformation: UserInformation;
 };
 
 export const UserService: UserService = {
@@ -33,6 +38,17 @@ export const UserService: UserService = {
         }),
       });
       return convertToUserChangeInformationEntity(response);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  },
+  getUserInformation: async () => {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/api/user/info`, {
+        method: "GET",
+      });
+      return convertToUserInformationEntity(response);
     } catch (error) {
       console.log(error);
       throw error;

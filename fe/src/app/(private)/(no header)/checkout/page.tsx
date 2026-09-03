@@ -2,21 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LoaderCircle } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { toast } from "sonner";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
 import { CartItemEntity } from "@/features/cart/entities/cart.entity";
 
-import { useSession } from "next-auth/react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { updateQuantity } from "@/store/slices/cartSlice";
 export default function Page() {
-  const { data: session, update } = useSession();
+  const user = useAppSelector((state) => state.user);
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const queryClient = useQueryClient();
   const formatter = new Intl.NumberFormat("vi-VN");
   const [checkoutItems, setCheckoutItems] = useState<CartItemEntity[]>([]);
   const [checkoutMode, setCheckoutMode] = useState<"cart" | "buy_now">("cart");
-  const user = session?.user;
 
   useEffect(() => {
     // Chỉ chạy trên client-side
@@ -37,9 +38,9 @@ export default function Page() {
 
   // State lưu trữ thông tin form
   const [formData, setFormData] = useState({
-    name: user?.Name || "",
-    phone: user?.Phone || "",
-    address: user?.Address || "",
+    name: user.Name || "",
+    phone: user.Phone || "",
+    address: user.Address || "",
     request: "",
   });
 
@@ -99,9 +100,8 @@ export default function Page() {
 
       if (checkoutMode === "cart") {
         const cartQuantity = await CartUsecase.getCartQuantity();
-        await update({
-          cartQuantity: cartQuantity,
-        });
+
+        dispatch(updateQuantity(cartQuantity));
         queryClient.invalidateQueries({ queryKey: ["cart-items"] });
       }
 

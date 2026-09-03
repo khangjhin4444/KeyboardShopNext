@@ -29,13 +29,14 @@ import {
 } from "./ui/dialog";
 import EditProfileForm from "./edit-profile-form";
 import { signOut, useSession } from "next-auth/react";
+import { useAppSelector } from "@/store/hooks";
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
   const isAuth = !!session?.user;
-  const user = session?.user;
+  const cartQuantity = useAppSelector((state) => state.cart.quantity);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
 
@@ -92,10 +93,10 @@ export default function Header() {
             <div
               className={clsx(
                 "absolute select-none -right-2 -top-2 bg-gray-300 rounded-full p-2 w-6 h-6  items-center flex justify-center font-bold",
-                { hidden: !user },
+                { hidden: !isAuth },
               )}
             >
-              {user?.cartQuantity}
+              {cartQuantity}
             </div>
           </button>
           <button
@@ -147,7 +148,10 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent
+                className="sm:max-w-106.25"
+                aria-describedby={undefined}
+              >
                 <DialogHeader>
                   <DialogTitle>User Profile</DialogTitle>
                 </DialogHeader>

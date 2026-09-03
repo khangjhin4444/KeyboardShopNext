@@ -7,11 +7,12 @@ import { useParams, useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Quantity from "@/components/quantity";
-import { useSession } from "next-auth/react";
-import { pre } from "framer-motion/client";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { updateQuantity } from "@/store/slices/cartSlice";
 
 export default function Page() {
-  const { data: session, update } = useSession();
+  const cartQuantity = useAppSelector((state) => state.cart.quantity);
+  const dispatch = useAppDispatch();
   const params = useParams();
   const router = useRouter();
   const productID = parseInt(params.id as string, 10);
@@ -28,7 +29,7 @@ export default function Page() {
 
   const [activeVariant, setActiveVariant] = useState<Variant | null>(null);
   const [mainImage, setMainImage] = useState<string>("temp");
-  const [quantity, setQuantity] = useState<number | string>(1);
+  const [quantity, setQuantity] = useState<number>(1);
   const [zoom, setZoom] = useState({ show: false, x: 0, y: 0 });
 
   const addToCartMutation = useMutation({
@@ -36,19 +37,19 @@ export default function Page() {
       return CartUsecase.addToCart(payload); // Trả kết quả về cho onSuccess xử lý
     },
     onMutate: async (payload) => {
-      const previousCartQuantity = session?.user.cartQuantity || 0;
+      const previousCartQuantity = cartQuantity;
       const optimisticQuantiy = Number(previousCartQuantity) + payload.Quantity;
-      await update({ cartQuantity: optimisticQuantiy });
+      dispatch(updateQuantity(optimisticQuantiy));
       return { previousCartQuantity };
     },
     onError: async (err, payload, contex) => {
       if (contex?.previousCartQuantity !== undefined) {
-        await update({ cartQuantity: contex.previousCartQuantity });
+        dispatch(updateQuantity(contex.previousCartQuantity));
       }
       throw new Error(err.message || "Error when add to cart");
     },
     onSuccess: async (data) => {
-      await update({ cartQuantity: data.newQuantity });
+      dispatch(updateQuantity(data.newQuantity!));
     },
   });
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {

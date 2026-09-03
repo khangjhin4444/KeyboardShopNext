@@ -10,4 +10,5 @@ export const UserUsecase = {
     name: string;
     phone: string;
   }) => UserService.userChangeInformation({ address, name, phone }),
+  getUserInformation: () => UserService.getUserInformation(),
 };

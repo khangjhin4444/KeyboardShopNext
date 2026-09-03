@@ -3,6 +3,7 @@ import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/providers/AuthProvider";
+import StoreProvider from "@/providers/StoreProvider";
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
@@ -21,7 +22,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Toaster />
         <AuthProvider>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            <StoreProvider>{children}</StoreProvider>
+          </QueryProvider>
         </AuthProvider>
       </body>
     </html>

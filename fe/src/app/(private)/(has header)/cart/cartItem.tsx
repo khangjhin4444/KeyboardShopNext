@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CartUsecase } from "@/features/cart/usecase/cart.usecase";
 import { useSession } from "next-auth/react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { updateQuantity } from "@/store/slices/cartSlice";
 
 export default function CartItem({
   checkboxList,
@@ -17,20 +19,14 @@ export default function CartItem({
   onCheckboxChange: (variantId: number) => void;
   item: CartItemEntity;
 }) {
-  const { data: session, update } = useSession();
+  const cartQuantity = useAppSelector((state) => state.cart.quantity);
+  const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const formatter = new Intl.NumberFormat("vi-VN");
 
-  const [quantity, setQuantity] = useState<number | string>(item.Quantity);
+  const [quantity, setQuantity] = useState<number>(item.Quantity);
   const prevQuantity = useRef(item.Quantity);
 
-  // Dùng ref để luôn lấy giá trị cartQuantity mới nhất, tránh stale closure
-  const cartQuantityRef = useRef(session?.user?.cartQuantity || 0);
-  useEffect(() => {
-    cartQuantityRef.current = session?.user?.cartQuantity || 0;
-  }, [session?.user?.cartQuantity]);
-
-  // Queue đảm bảo các lần gọi API chạy tuần tự, không song song
   const updateQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const changeItemQuantityMutation = useMutation({
@@ -38,6 +34,15 @@ export default function CartItem({
       return CartUsecase.changeItemQuantity(payload);
     },
     onMutate: async (payload) => {
+      console.log("call onMutate ");
+      const previousCartQuantity = cartQuantity;
+      console.log("previousCartQuantity", previousCartQuantity);
+      const oldQuantity = Number(prevQuantity.current);
+      console.log("payload.Quantity", payload.Quantity);
+      console.log("oldQuantity", oldQuantity);
+      dispatch(
+        updateQuantity(previousCartQuantity - oldQuantity + payload.Quantity),
+      );
       const previousCart = queryClient.getQueryData(["cart-items"]);
       queryClient.setQueryData(["cart-items"], (oldData: any) => {
         if (!oldData) return oldData;
@@ -50,24 +55,22 @@ export default function CartItem({
           ),
         };
       });
-      const previousCartQuantity = cartQuantityRef.current;
-      const oldQuantity = Number(prevQuantity.current);
-      await update({
-        cartQuantity: previousCartQuantity - oldQuantity + payload.Quantity,
-      });
+
+      prevQuantity.current = payload.Quantity;
+
       return { previousCartQuantity, oldQuantity, previousCart };
     },
     onError: async (err, payload, context) => {
       if (context) {
         queryClient.setQueryData(["cart-items"], context.previousCart);
-        await update({ cartQuantity: context.previousCartQuantity });
+        dispatch(updateQuantity(context.previousCartQuantity));
         prevQuantity.current = context.oldQuantity;
         setQuantity(context.oldQuantity); // Khôi phục UI input
       }
       throw new Error("Error when changing quantity");
     },
     onSuccess: async (data) => {
-      await update({ cartQuantity: data.newQuantity });
+      dispatch(updateQuantity(data.newQuantity!));
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["cart-items"] });
@@ -84,23 +87,15 @@ export default function CartItem({
 
   const handleUpdateCartAPI = (newQuantity: number) => {
     const oldQuantity = Number(prevQuantity.current);
-    const delta = newQuantity - oldQuantity;
-    // Cập nhật prevQuantity ngay để các lần click tiếp theo tính delta đúng
-    prevQuantity.current = newQuantity;
-
-    // Chain vào queue: lần gọi mới luôn đợi lần trước xong
+    if (newQuantity === oldQuantity) {
+      return;
+    }
     updateQueueRef.current = updateQueueRef.current.then(async () => {
       try {
-        await changeItemQuantityMutation
-          .mutateAsync({
-            VariantID: item.VariantID,
-            Quantity: newQuantity,
-          })
-          .then(async (res) => {
-            await update({
-              cartQuantity: res.newQuantity,
-            });
-          });
+        changeItemQuantityMutation.mutate({
+          VariantID: item.VariantID,
+          Quantity: newQuantity,
+        });
       } catch (error) {
         console.error("Lỗi cập nhật số lượng:", error);
         // Rollback prevQuantity khi lỗi
@@ -116,9 +111,7 @@ export default function CartItem({
       await deleteCartItemMutation
         .mutateAsync({ VariantID })
         .then(async (res) => {
-          await update({
-            cartQuantity: res.newQuantity,
-          });
+          dispatch(updateQuantity(res.newQuantity!));
         });
 
       queryClient.invalidateQueries({ queryKey: ["cart-items"] });

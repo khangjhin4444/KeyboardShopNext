@@ -9,8 +9,10 @@ import { Input } from "./ui/input";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserUsecase } from "@/features/user/usecase/user.usecase";
-import { p } from "motion/react-client";
-import { useSession } from "next-auth/react";
+
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setUserInfo } from "@/store/slices/userSlice";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   address: z.string().min(5, "Address must be at least 5 characters."),
@@ -26,18 +28,26 @@ export default function EditProfileForm({
 }: {
   onSuccess: () => void;
 }) {
-  const { data: session, update } = useSession();
-  const user = session?.user;
-  console.log(user);
-  // 1. KHÔNG CẦN DÙNG useState NỮA! Giao toàn quyền cho React Hook Form
+  const user = useAppSelector((state) => state.user);
+  const dispatch = useAppDispatch();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      address: user?.Address || "",
-      name: user?.Name || "",
-      phone: user?.Phone || "",
+      address: user.Address || "",
+      name: user.Name || "",
+      phone: user.Phone || "",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        address: user.Address || "",
+        name: user.Name || "",
+        phone: user.Phone || "",
+      });
+    }
+  }, [user, form]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (payload: z.infer<typeof formSchema>) => {
@@ -46,11 +56,13 @@ export default function EditProfileForm({
     onSuccess: async (data, payload) => {
       toast.success(data.message);
 
-      await update({
-        Name: payload.name,
-        Address: payload.address,
-        Phone: payload.phone,
-      });
+      dispatch(
+        setUserInfo({
+          Name: payload.name,
+          Address: payload.address,
+          Phone: payload.phone,
+        }),
+      );
       onSuccess();
     },
     onError: () => {

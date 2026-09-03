@@ -5,11 +5,12 @@ import clsx from "clsx";
 
 // 1. Thêm prop onUpdateCart vào interface
 interface QuantityProps {
-  quantity: number | string;
+  quantity: number;
   currentStock: number;
-  setQuantity: Dispatch<SetStateAction<number | string>>;
+  setQuantity: Dispatch<SetStateAction<number>>;
   isCart: boolean;
   onUpdateCart?: (newQuantity: number) => void; // Hàm gọi API truyền từ bên ngoài vào
+  oldQuantity?: number;
 }
 
 export default function Quantity({
@@ -18,8 +19,9 @@ export default function Quantity({
   setQuantity,
   isCart,
   onUpdateCart,
+  oldQuantity,
 }: QuantityProps) {
-  const initialQuantity = useRef(quantity);
+  // const initialQuantity = useRef(quantity);
   const onUpdateCartRef = useRef(onUpdateCart);
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function Quantity({
     }
     if (type === "input" && value !== undefined) {
       if (value === "") {
-        setQuantity("");
+        setQuantity(0);
         return;
       }
       const numValue = parseInt(value.toString(), 10);
@@ -55,13 +57,13 @@ export default function Quantity({
   };
 
   useEffect(() => {
-    if (quantity === initialQuantity.current) {
-      return;
-    }
+    // if (quantity === initialQuantity.current) {
+    //   console.log("Số lượng không thay đổi, không gọi API");
+    //   return;
+    // }
 
-    if (isCart && quantity !== "" && Number(quantity) >= 1) {
+    if (isCart && quantity && Number(quantity) >= 1) {
       const handler = setTimeout(() => {
-        // Sử dụng hàm từ Ref thay vì dùng trực tiếp biến onUpdateCart
         if (onUpdateCartRef.current) {
           onUpdateCartRef.current(Number(quantity));
         }
@@ -94,7 +96,7 @@ export default function Quantity({
           value={quantity}
           onChange={(e) => handleQuantityChange("input", e.target.value)}
           onBlur={() => {
-            if (quantity === "" || Number(quantity) < 1) {
+            if (!quantity || Number(quantity) < 1) {
               setQuantity(1);
             }
           }}
