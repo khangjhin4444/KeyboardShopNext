@@ -14,6 +14,7 @@ export const cartSlice = createSlice({
       state.quantity += action.payload;
     },
     updateQuantity: (state, action: PayloadAction<number>) => {
+      console.log("updateQuantity", action.payload);
       state.quantity = action.payload;
     },
   },

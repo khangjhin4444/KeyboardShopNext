@@ -34,18 +34,21 @@ export default function CartItem({
       return CartUsecase.changeItemQuantity(payload);
     },
     onMutate: async (payload) => {
-      console.log("call onMutate ");
       const previousCartQuantity = cartQuantity;
-      console.log("previousCartQuantity", previousCartQuantity);
       const oldQuantity = Number(prevQuantity.current);
-      console.log("payload.Quantity", payload.Quantity);
-      console.log("oldQuantity", oldQuantity);
+      console.log(
+        "onMutate",
+        previousCartQuantity,
+        oldQuantity,
+        payload.Quantity,
+      );
       dispatch(
         updateQuantity(previousCartQuantity - oldQuantity + payload.Quantity),
       );
       const previousCart = queryClient.getQueryData(["cart-items"]);
       queryClient.setQueryData(["cart-items"], (oldData: any) => {
         if (!oldData) return oldData;
+        console.log("oldData", oldData);
         return {
           ...oldData,
           items: oldData.items.map((i: CartItemEntity) =>
@@ -70,6 +73,7 @@ export default function CartItem({
       throw new Error("Error when changing quantity");
     },
     onSuccess: async (data) => {
+      // console.log("onSuccess call dispatch", data.newQuantity);
       dispatch(updateQuantity(data.newQuantity!));
     },
     onSettled: () => {
@@ -92,7 +96,7 @@ export default function CartItem({
     }
     updateQueueRef.current = updateQueueRef.current.then(async () => {
       try {
-        changeItemQuantityMutation.mutate({
+        await changeItemQuantityMutation.mutateAsync({
           VariantID: item.VariantID,
           Quantity: newQuantity,
         });
