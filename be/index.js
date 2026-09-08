@@ -16,7 +16,7 @@ app.use(
     origin: [
       "http://localhost:3000",
       "https://keyboard-shop-next-henna.vercel.app",
-      "https://jkeyboard.netlify.app",
+      "https://jkkeyboard.netlify.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
