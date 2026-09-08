@@ -123,7 +123,7 @@ const getProducts = async (req, res) => {
       nextCursor: nextCursor, // Frontend sẽ dùng chuỗi này thay cho `page`
     });
   } catch (error) {
-    console.error("Lỗi phân trang cursor:", error);
+    console.error("Error catch:", error);
     res.status(500).json({ success: false, message: "Lỗi lấy dữ liệu!" });
   }
 };
