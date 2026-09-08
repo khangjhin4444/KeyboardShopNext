@@ -96,7 +96,7 @@ IMGBB_API_KEY=your_imgbb_api_key
 
 Make sure the Express.js backend is running on port `8000`.
 
-Start the Next.js frontend:
+Start the Next.js frontend (cd to the fe folder):
 
 ```bash
 npm run dev
@@ -106,6 +106,12 @@ The frontend will be available at:
 
 ```text
 http://localhost:3000
+```
+
+Start the Next.js frontend (cd to the be folder):
+
+```bash
+npm run dev
 ```
 
 The backend API should be available at:
