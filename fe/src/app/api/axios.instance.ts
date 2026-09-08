@@ -5,7 +5,7 @@ import axios, {
 } from "axios";
 import { getSession, signOut } from "next-auth/react";
 import { safeParse, type ZodType, z } from "zod";
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 declare module "axios" {
   export interface AxiosRequestConfig {
