@@ -1,9 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
 import { getSession, signOut } from "next-auth/react";
+
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const session = await getSession();
 
   if (!session || !session.accessToken) {
+    window.location.href = "/login";
     throw new Error("UNAUTHORIZED");
   }
 
