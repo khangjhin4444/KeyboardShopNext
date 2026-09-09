@@ -7,7 +7,7 @@ export default function Page() {
           <div className="relative inline-block w-full rounded-xl overflow-hidden shadow-md">
             {/* Nếu dùng Next.js, bạn có thể cân nhắc đổi thẻ img thành thẻ <Image /> */}
             <img
-              src="./about.jpg"
+              src="/about.jpg"
               className="w-full h-auto object-cover"
               alt="Keyboard"
             />

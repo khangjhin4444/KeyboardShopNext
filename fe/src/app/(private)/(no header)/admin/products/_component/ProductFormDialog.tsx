@@ -191,7 +191,6 @@ export function ProductFormDialog({
       stock: v.stock,
       main_image: mainImageURLs[i]!,
     }));
-    console.log(finalVariants);
 
     const payload = {
       name: name,

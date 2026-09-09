@@ -133,7 +133,6 @@ export default function Page() {
       orderPayload.variantIds = checkoutItems.map((item) => item.VariantID);
     }
 
-    console.log("Submitting Order: ", orderPayload);
     const placeOrderPromise = placeOrderMutation
       .mutateAsync(orderPayload)
       .then((res) => {

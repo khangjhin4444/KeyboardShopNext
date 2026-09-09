@@ -65,7 +65,6 @@ export default function Quantity({
     if (isCart && quantity && Number(quantity) >= 1) {
       const handler = setTimeout(() => {
         if (onUpdateCartRef.current) {
-          console.log("call change quantity useEffect: ", quantity);
           onUpdateCartRef.current(Number(quantity));
         }
       }, 400);

@@ -36,19 +36,13 @@ export default function CartItem({
     onMutate: async (payload) => {
       const previousCartQuantity = cartQuantity;
       const oldQuantity = Number(prevQuantity.current);
-      console.log(
-        "onMutate",
-        previousCartQuantity,
-        oldQuantity,
-        payload.Quantity,
-      );
+
       dispatch(
         updateQuantity(previousCartQuantity - oldQuantity + payload.Quantity),
       );
       const previousCart = queryClient.getQueryData(["cart-items"]);
       queryClient.setQueryData(["cart-items"], (oldData: any) => {
         if (!oldData) return oldData;
-        console.log("oldData", oldData);
         return {
           ...oldData,
           items: oldData.items.map((i: CartItemEntity) =>
@@ -73,7 +67,6 @@ export default function CartItem({
       throw new Error("Error when changing quantity");
     },
     onSuccess: async (data) => {
-      // console.log("onSuccess call dispatch", data.newQuantity);
       dispatch(updateQuantity(data.newQuantity!));
     },
     onSettled: () => {

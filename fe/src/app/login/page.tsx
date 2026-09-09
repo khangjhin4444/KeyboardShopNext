@@ -46,7 +46,6 @@ export default function AuthPage() {
     }
     try {
       const res = await checkUsernameMutation.mutateAsync();
-      console.log(res);
       if (res.exist) {
         setErrorMsg("Username exist!");
         return;
@@ -94,9 +93,7 @@ export default function AuthPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, fullName, phone, address }),
       });
-      console.log(res);
       const data = await res.json();
-      console.log(data);
       if (data.success) {
         alert("Sign Up success, please Log In");
         setIsLogin(true);
@@ -106,7 +103,6 @@ export default function AuthPage() {
       }
     } catch (err) {
       setErrorMsg("Fail to connect server ");
-      console.log(err);
     }
   };
 

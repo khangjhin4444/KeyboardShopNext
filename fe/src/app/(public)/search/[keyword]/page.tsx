@@ -39,7 +39,6 @@ export default function Page() {
       return allPages.length + 1;
     },
   });
-  console.log(data?.pages[0].length);
   return (
     <div className="flex flex-col p-10 justify-center items-center w-full">
       <h1 className="font-bold text-2xl ">Search Result</h1>
