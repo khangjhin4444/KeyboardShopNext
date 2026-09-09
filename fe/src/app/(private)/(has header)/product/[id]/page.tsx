@@ -27,10 +27,17 @@ export default function Page() {
     enabled: !!data?.ProductType,
   });
 
-  const [activeVariant, setActiveVariant] = useState<Variant | null>(null);
-  const [mainImage, setMainImage] = useState<string>("temp");
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
   const [zoom, setZoom] = useState({ show: false, x: 0, y: 0 });
+
+  const defaultVariant =
+    data?.variants.find((v: Variant) => v.Stock > 0) || data?.variants[0];
+
+  const activeVariant = selectedVariant || defaultVariant;
+  const mainImage =
+    selectedImage || activeVariant?.MainImage || data?.images[0];
 
   const addToCartMutation = useMutation({
     mutationFn: async (payload: { VariantID: number; Quantity: number }) => {
@@ -61,31 +68,6 @@ export default function Page() {
 
     setZoom({ show: true, x, y });
   };
-  useEffect(() => {
-    if (data && data.variants && data.variants.length > 0) {
-      const uniqueVariants = data.variants.reduce(
-        (acc: Variant[], current: Variant) => {
-          if (!acc.find((v) => v.Color === current.Color)) {
-            acc.push(current);
-          }
-          return acc;
-        },
-        [],
-      );
-
-      const defaultVariant =
-        uniqueVariants.find((v: Variant) => v.Stock > 0) || uniqueVariants[0];
-
-      setActiveVariant(defaultVariant);
-      setMainImage(defaultVariant?.MainImage || data.images[0]);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (activeVariant) {
-      setMainImage(activeVariant.MainImage);
-    }
-  }, [activeVariant]);
 
   if (isLoading || !data) {
     return (
@@ -101,12 +83,10 @@ export default function Page() {
       </div>
     );
   }
-  const uniqueVariants = data?.variants.reduce((acc: Variant[], current) => {
-    if (!acc.find((v) => v.Color === current.Color)) {
-      acc.push(current);
-    }
-    return acc;
-  }, []);
+  const handleVariantClick = (variant: Variant) => {
+    setSelectedVariant(variant);
+    setSelectedImage(null);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN").format(amount) + "VND";
@@ -182,7 +162,7 @@ export default function Page() {
                 onMouseLeave={() => setZoom({ show: false, x: 0, y: 0 })}
               >
                 <img
-                  src={mainImage}
+                  src={mainImage!}
                   alt="Main Product"
                   className={`w-full h-full object-fill transition-opacity duration-600 ${
                     zoom.show ? "opacity-80" : "opacity-100"
@@ -210,7 +190,7 @@ export default function Page() {
                 <div
                   key={index}
                   className="snap-start shrink-0"
-                  onClick={() => setMainImage(imgUrl)} // Click thumbnail -> Đổi ảnh chính
+                  onClick={() => setSelectedImage(imgUrl)} // Click thumbnail -> Đổi ảnh chính
                 >
                   <img
                     src={imgUrl}
@@ -233,7 +213,7 @@ export default function Page() {
             {formatCurrency(activeVariant?.Price || 0)}
           </h2>
 
-          {uniqueVariants.length > 0 && uniqueVariants[0].Color !== "Basic" && (
+          {data.variants.length > 0 && data.variants[0].Color !== "Basic" && (
             <div className="mb-8">
               <div className="text-2xl mb-4 flex items-center gap-4">
                 Variants:
@@ -243,11 +223,11 @@ export default function Page() {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                {uniqueVariants.map((variant, index) => (
+                {data.variants.map((variant, index) => (
                   <button
                     key={index}
                     disabled={variant.Stock <= 0}
-                    onClick={() => setActiveVariant(variant)}
+                    onClick={() => handleVariantClick(variant)}
                     className={`px-4 py-2 w-32 rounded-lg border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                       activeVariant?.VariantID === variant.VariantID
                         ? "border-[#3B9AB8] bg-blue-50 text-[#3B9AB8] font-bold"
