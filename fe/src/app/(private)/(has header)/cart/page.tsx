@@ -12,33 +12,13 @@ import { toast } from "sonner";
 export default function CartPage() {
   const router = useRouter();
   const formatter = new Intl.NumberFormat("vi-VN");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const initializedVariantsRef = useRef(new Set<number>());
+  const [unSelectedIds, setUnSelectedIds] = useState<number[]>([]);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["cart-items"],
     queryFn: () => CartUsecase.getCartItems(),
   });
   const cartItems = data?.items || [];
-
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      const newVariants = cartItems.filter(
-        (item: CartItemEntity) =>
-          !initializedVariantsRef.current.has(item.VariantID),
-      );
-
-      if (newVariants.length > 0) {
-        const newVariantIds = newVariants.map(
-          (item: CartItemEntity) => item.VariantID,
-        );
-
-        setSelectedIds((prev) => [...prev, ...newVariantIds]);
-
-        newVariantIds.forEach((id) => initializedVariantsRef.current.add(id));
-      }
-    }
-  }, [cartItems]);
 
   // UI khi đang tải
   if (isLoading) {
@@ -50,7 +30,7 @@ export default function CartPage() {
   }
 
   const handleCheckboxChange = (variantId: number) => {
-    setSelectedIds((prev) =>
+    setUnSelectedIds((prev) =>
       prev.includes(variantId)
         ? prev.filter((id) => id !== variantId)
         : [...prev, variantId],
@@ -58,14 +38,14 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    if (selectedIds.length === 0) {
+    const checkoutItems = cartItems.filter(
+      (item) => !unSelectedIds.includes(item.VariantID),
+    );
+    if (checkoutItems.length === 0) {
       toast.error("Please select at least one item to checkout.");
       return;
     }
-    const itemsToCheckout = cartItems.filter((item) =>
-      selectedIds.includes(item.VariantID),
-    );
-    sessionStorage.setItem("checkout_session", JSON.stringify(itemsToCheckout));
+    sessionStorage.setItem("checkout_session", JSON.stringify(checkoutItems));
 
     router.push("/checkout");
   };
@@ -79,7 +59,7 @@ export default function CartPage() {
     );
   }
   const grandTotal = cartItems.reduce((sum, item) => {
-    if (selectedIds.includes(item.VariantID)) {
+    if (!unSelectedIds.includes(item.VariantID)) {
       return sum + item.Quantity * item.Price;
     }
     return sum;
@@ -96,7 +76,7 @@ export default function CartPage() {
         <div className="space-y-6">
           {cartItems.map((item: CartItemEntity) => (
             <CartItem
-              checkboxList={selectedIds}
+              unSelectedList={unSelectedIds}
               onCheckboxChange={handleCheckboxChange}
               item={item}
               key={item.CartItemID}

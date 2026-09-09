@@ -11,11 +11,11 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateQuantity } from "@/store/slices/cartSlice";
 
 export default function CartItem({
-  checkboxList,
+  unSelectedList,
   onCheckboxChange,
   item,
 }: {
-  checkboxList: number[];
+  unSelectedList: number[];
   onCheckboxChange: (variantId: number) => void;
   item: CartItemEntity;
 }) {
@@ -133,7 +133,7 @@ export default function CartItem({
       <div className="flex items-center">
         <Checkbox
           className="w-6 h-6 border-2 border-black"
-          checked={checkboxList.includes(item.VariantID)}
+          checked={!unSelectedList.includes(item.VariantID)}
           onCheckedChange={() => onCheckboxChange(item.VariantID)}
         />
       </div>
